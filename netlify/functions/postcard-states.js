@@ -23,13 +23,24 @@ exports.handler = async function(event, context) {
         const loginPageHtml = await loginPageRes.text();
 
         // Extract CSRF token from <meta name="csrf-token" content="...">
-                const csrfMatch = loginPageHtml.match(/name="csrf-token"\s+content="([^"]+)"/) || loginPageHtml.match(/content="([^"]+)"\s+name="csrf-token"/) || loginPageHtml.match(/name="authenticity_token"\s+value="([^"]+)"/) || loginPageHtml.match(/value="([^"]+)"\s+name="authenticity_token"/) || loginPageHtml.match(/authenticity_token[^>]+value="([^"]+)"/);
+        const csrfMatch = loginPageHtml.match(/name="csrf-token"\s+content="([^"]+)"/) ||
+            loginPageHtml.match(/content="([^"]+)"\s+name="csrf-token"/) ||
+            loginPageHtml.match(/name="authenticity_token"\s+value="([^"]+)"/) ||
+            loginPageHtml.match(/value="([^"]+)"\s+name="authenticity_token"/) ||
+            loginPageHtml.match(/authenticity_token[^>]+value="([^"]+)"/);
+
         if (!csrfMatch) {
             return {
                 statusCode: 500,
-                                    body: JSON.stringify({ error: 'Could not find CSRF token. Status: ' + loginPageRes.status + ' URL: ' + loginPageRes.url + ' Preview: ' + loginPageHtml.substring(0, 300) })
-                
+                body: JSON.stringify({
+                    error: 'Could not find CSRF token.',
+                    status: loginPageRes.status,
+                    url: loginPageRes.url,
+                    preview: loginPageHtml.substring(0, 400)
+                })
+            };
         }
+
         const csrfToken = csrfMatch[1];
 
         // Grab session cookie from login page response
