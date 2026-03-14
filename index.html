@@ -334,6 +334,8 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .result-url a { color: #718096; }
+        .result-url a:hover { color: #3D9BE9; }
         .result-status {
             font-family: 'Raleway', sans-serif;
             font-weight: 700;
@@ -806,15 +808,26 @@
                 return result;
             }
 
-            // General link check
+            // General link check — route through server to avoid CORS/http-block issues
             try {
-                await fetch(href, {method:'GET', mode:'no-cors', signal:AbortSignal.timeout(8000)});
-                result.status='pass'; result.icon='✅'; result.message='Reachable';
+                const chkRes = await fetch('/.netlify/functions/fetch-proof', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({url: href}),
+                    signal: AbortSignal.timeout(12000)
+                });
+                if (chkRes.ok) {
+                    result.status='pass'; result.icon='✅'; result.message='Reachable';
+                } else if (chkRes.status === 404) {
+                    result.status='fail'; result.icon='❌'; result.message='404 Not Found';
+                } else {
+                    result.status='warn'; result.icon='⚠️'; result.message='Server returned ' + chkRes.status;
+                }
             } catch(e) {
                 if (e.name==='AbortError'||e.name==='TimeoutError') {
-                    result.status='warn'; result.icon='⚠️'; result.message='Timed out (check manually)';
+                    result.status='warn'; result.icon='⚠️'; result.message='Timed out — check manually';
                 } else {
-                    result.status='fail'; result.icon='❌'; result.message='Unreachable: '+e.message;
+                    result.status='warn'; result.icon='⚠️'; result.message='Could not verify — check manually';
                 }
             }
             return result;
@@ -838,7 +851,7 @@
                     <div class="result-meta">
                         <div class="result-label">${r.label}</div>
                         ${title?`<div class="result-context">${title}</div>`:''}
-                        <div class="result-url">${escH(shortUrl)}</div>
+                        <div class="result-url"><a href="${escH(r.href)}" target="_blank" style="color:inherit;text-decoration:underline;word-break:break-all;">${escH(shortUrl)}</a></div>
                     </div>
                     <div class="result-status">${escH(r.message)}</div>
                 </div>${checks}</div>`;
@@ -900,7 +913,7 @@
                     }
                     const d=document.createElement('div');
                     d.id='lc-'+i;
-                    d.innerHTML=`<div class="result-card checking"><div class="result-header"><span class="result-icon">⏳</span><div class="result-meta"><div class="result-label">${lcLabelFor(lcClassify(l.href))}</div><div class="result-url">${escH(l.href.substring(0,72))}</div></div><div class="result-status" style="color:#2b6cb0">Checking…</div></div></div>`;
+                    d.innerHTML=`<div class="result-card checking"><div class="result-header"><span class="result-icon">⏳</span><div class="result-meta"><div class="result-label">${lcLabelFor(lcClassify(l.href))}</div><div class="result-url"><a href="${escH(l.href)}" target="_blank" style="color:inherit;text-decoration:underline;word-break:break-all;">${escH(l.href.substring(0,72))}</a></div></div><div class="result-status" style="color:#2b6cb0">Checking…</div></div></div>`;
                     listDiv.appendChild(d);
                 });
 
@@ -944,9 +957,9 @@
             const checking = done < total ? ' · ' + done + '/' + total : '';
             sumDiv.innerHTML = [
                 '<span class="summary-pill pill-total">🔗 ' + total + ' links' + checking + '</span>',
-                p ? '<span class="summary-pill pill-pass">✅ ' + p + ' OK ▼</span>' : '',
-                w ? '<span class="summary-pill pill-warn">⚠️ ' + w + ' warnings ▼</span>' : '',
-                f ? '<span class="summary-pill pill-fail">❌ ' + f + ' failed ▼</span>' : ''
+                p ? '<span class="summary-pill pill-pass">✅ ' + p + ' OK</span>' : '',
+                w ? '<span class="summary-pill pill-warn">⚠️ ' + w + ' warnings</span>' : '',
+                f ? '<span class="summary-pill pill-fail">❌ ' + f + ' failed</span>' : ''
             ].join('');
         }
 
@@ -1011,8 +1024,8 @@
                 evHdr.textContent = '🗓️ Voter Drive RSVP Links (' + evIndices.length + ')';
                 listDiv.appendChild(evHdr);
                 // Failed first (open), then OK (collapsed)
-                if (evFail.length) makeGroup('❌ ' + evFail.length + ' failed ▼', evFail, true);
-                if (evPass.length) makeGroup('✅ ' + evPass.length + ' OK ▼', evPass, false);
+                if (evFail.length) makeGroup('❌ ' + evFail.length + ' failed', evFail, true);
+                if (evPass.length) makeGroup('✅ ' + evPass.length + ' OK', evPass, false);
             }
 
             // Section: Other Links
@@ -1021,8 +1034,8 @@
                 genHdr.className = 'section-heading';
                 genHdr.textContent = '🔗 Other Links (' + genIndices.length + ')';
                 listDiv.appendChild(genHdr);
-                if (genFail.length) makeGroup('❌ ' + genFail.length + ' failed ▼', genFail, true);
-                if (genPass.length) makeGroup('✅ ' + genPass.length + ' OK ▼', genPass, false);
+                if (genFail.length) makeGroup('❌ ' + genFail.length + ' failed', genFail, true);
+                if (genPass.length) makeGroup('✅ ' + genPass.length + ' OK', genPass, false);
             }
 
             // Update summary pills to be clickable toggles
