@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voter Drive List Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,59 +13,83 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #02013C;
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 48px 20px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
         }
 
+        /* ── Top header: BLURBINATOR ── */
+        .site-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .site-title {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 900;
+            font-size: 72px;
+            letter-spacing: 2px;
+            color: #FFA703;
+            line-height: 1;
+        }
+
+        .site-subtitle {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            color: #ffffff;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Tool card ── */
         .container {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             max-width: 900px;
             width: 100%;
             padding: 40px;
         }
 
-        h1 {
-            color: #2d3748;
-            margin-bottom: 12px;
-            font-size: 28px;
+        .tool-title {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            color: #02013C;
+            margin-bottom: 20px;
+            font-size: 24px;
         }
 
-        .subtitle {
-            color: #718096;
-            margin-bottom: 32px;
-            font-size: 14px;
-        }
 
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        /* Generate button */
+        .generate-btn {
+            background: #FFA703;
+            color: #02013C;
             border: none;
             padding: 16px 32px;
             border-radius: 8px;
+            font-family: 'Raleway', sans-serif;
             font-size: 16px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(255, 167, 3, 0.4);
         }
 
-        button:hover {
+        .generate-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+            box-shadow: 0 6px 16px rgba(255, 167, 3, 0.6);
         }
 
-        button:active {
+        .generate-btn:active {
             transform: translateY(0);
         }
 
-        button:disabled {
+        .generate-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
@@ -98,24 +123,36 @@
         }
 
         .output-box a {
-            color: #667eea;
+            color: #02013C;
             font-weight: 600;
             text-decoration: underline;
         }
 
         .output-box a:hover {
-            color: #764ba2;
+            color: #FFA703;
         }
 
         .copy-button {
             background: #48bb78;
+            color: white;
+            border: none;
             padding: 12px 24px;
+            border-radius: 8px;
             font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
         }
 
         .copy-button:hover {
             background: #38a169;
+            transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .copy-button:active {
+            transform: translateY(0);
         }
 
         .loading {
@@ -144,6 +181,8 @@
         }
 
         .info {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
             background: #ebf8ff;
             border-left: 4px solid #4299e1;
             padding: 16px;
@@ -155,23 +194,29 @@
 
         .count {
             font-weight: 600;
-            color: #667eea;
+            color: #02013C;
             margin-top: 16px;
             font-size: 14px;
         }
     </style>
 </head>
 <body>
+
+    <!-- BLURBINATOR masthead, lives above the white card -->
+    <div class="site-header">
+        <div class="site-title">BLURBINATOR</div>
+        <div class="site-subtitle">Multi-Tool to Help Build the Field Team 6 Weekly</div>
+    </div>
+
     <div class="container">
-        <h1>🗳️ Voter Drive List Generator</h1>
-        <p class="subtitle">Generate formatted voter drive event listings for your newsletter</p>
+        <h2 class="tool-title">🗳️ Voter Drive List Generator</h2>
 
         <div class="info">
-            <strong>What this does:</strong> Fetches all upcoming in-person voter registration drives from Mobilize and formats them ready to paste into your newsletter. Automatically excludes trainings.
+            Fetches all upcoming in-person voter registration drives from Mobilize and formats them ready to paste into your newsletter. Automatically excludes trainings.
         </div>
 
-        <button id="generateBtn" onclick="generateEventList()">
-            Generate Event List
+        <button class="generate-btn" id="generateBtn" onclick="generateEventList()">
+            Generate Voter Drive List
         </button>
 
         <div id="output" class="output-section">
@@ -203,20 +248,19 @@
             btn.innerHTML = 'Fetching events<span class="loading"></span>';
 
             try {
-                // Fetch events
-                const url = `${API_BASE}/organizations/${ORG_ID}/events?` + 
+                const url = `${API_BASE}/organizations/${ORG_ID}/events?` +
                     `timeslot_start=gte_now&` +
                     `event_types=VOTER_REG&` +
                     `per_page=100`;
 
                 const response = await fetch(url);
-                
+
                 if (!response.ok) {
                     throw new Error(`API returned ${response.status}: ${response.statusText}`);
                 }
 
                 const data = await response.json();
-                
+
                 if (!data.data || data.data.length === 0) {
                     throw new Error('No upcoming voter registration events found');
                 }
@@ -224,20 +268,12 @@
                 // Filter and format events
                 const events = data.data
                     .filter(event => {
-                        // Exclude trainings
                         const title = event.title.toLowerCase();
                         return !title.includes('training');
                     })
-                    .filter(event => {
-                        // Only in-person events
-                        return !event.is_virtual;
-                    })
-                    .filter(event => {
-                        // Must have location
-                        return event.location && event.location.locality && event.location.region;
-                    })
+                    .filter(event => !event.is_virtual)
+                    .filter(event => event.location && event.location.locality && event.location.region)
                     .map(event => {
-                        // Get the earliest future timeslot
                         const now = Math.floor(Date.now() / 1000);
                         const futureTimeslots = event.timeslots
                             .filter(ts => ts.start_date > now)
@@ -247,11 +283,10 @@
 
                         const timeslot = futureTimeslots[0];
                         const date = new Date(timeslot.start_date * 1000);
-                        
-                        // Format: "GA (SAVANNAH) – Saturday, 3/14 at 9:30a. RSVP HERE."
+
                         const state = event.location.region;
                         const city = event.location.locality.toUpperCase();
-                        
+
                         // Use the event's own timezone so the time matches what's on Mobilize
                         const tz = event.timezone || 'America/New_York';
 
@@ -279,14 +314,14 @@
 
                         // Detect NO KINGS tag from event title
                         const noKings = event.title.toLowerCase().includes('no kings') ? ' (NO KINGS)' : '';
-                        
-                        const url = event.browser_url;
-                        
+
+                        const eventUrl = event.browser_url;
+
                         return {
                             date: timeslot.start_date,
                             text: `${state} (${city}) – ${dayName}, ${month}/${day}${noKings} at ${timeStr}. RSVP HERE.`,
-                            html: `${state} (${city}) – ${dayName}, ${month}/${day}${noKings} at ${timeStr}. RSVP <a href="${url}" target="_blank">HERE</a>.`,
-                            url: url
+                            html: `${state} (${city}) – ${dayName}, ${month}/${day}${noKings} at ${timeStr}. RSVP <a href="${eventUrl}" target="_blank">HERE</a>.`,
+                            url: eventUrl
                         };
                     })
                     .filter(event => event !== null)
@@ -296,13 +331,14 @@
                     throw new Error('No qualifying events found after filtering');
                 }
 
-                // Render as HTML with clickable HERE links
+                // Render display version with clickable links
                 outputText.innerHTML = events.map(e => `<p>• ${e.html}</p>`).join('\n');
-                // Store plain text version for clipboard fallback
+
+                // Plain text for fallback
                 outputText.dataset.plaintext = events.map(e => `• ${e.text}`).join('\n');
 
-                // Rich HTML styled to match the FT6 Constant Contact newsletter exactly:
-                // 16pt Arial, dark blue (#1f3864), bullet points, underlined hotlinks
+                // Rich HTML styled to match FT6 Constant Contact newsletter:
+                // 16pt Arial, dark blue (#1f3864), underlined hotlinks
                 const styledItems = events.map(e =>
                     `<p style="font-family: Arial, sans-serif; font-size: 16px; color: #1f3864; margin: 4px 0;">` +
                     `• ${e.html.replace(
@@ -311,6 +347,7 @@
                     )}</p>`
                 ).join('\n');
                 outputText.dataset.htmltext = `<div style="font-family: Arial, sans-serif; font-size: 16px; color: #1f3864;">${styledItems}</div>`;
+
                 eventCount.textContent = `Found ${events.length} upcoming voter drive${events.length !== 1 ? 's' : ''}`;
                 output.classList.add('visible');
 
@@ -320,7 +357,7 @@
                 errorDiv.style.display = 'block';
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'Generate Event List';
+                btn.innerHTML = 'Generate Voter Drive List';
             }
         }
 
@@ -329,8 +366,6 @@
             const htmlContent = outputText.dataset.htmltext;
             const plainText = outputText.dataset.plaintext;
 
-            // Use ClipboardItem to copy both HTML and plain text
-            // so it pastes with live links into email/newsletter editors
             try {
                 const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
                 const textBlob = new Blob([plainText], { type: 'text/plain' });
@@ -342,7 +377,6 @@
                     setTimeout(() => { btn.textContent = originalText; }, 2500);
                 });
             } catch (e) {
-                // Fallback: copy plain text
                 navigator.clipboard.writeText(plainText).then(() => {
                     const btn = event.target;
                     const originalText = btn.textContent;
