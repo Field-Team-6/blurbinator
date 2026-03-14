@@ -705,10 +705,8 @@
 
         function lcParseListedEvent(ctx) {
             if (!ctx) return null;
-            // Format 1: in-person drives — STATE (CITY) – Weekday, M/D at Hp
             const m1 = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(\d+)\/(\d+)(?:\s*\([^)]*\))?\s*at\s*([\d:]+)([ap])/i);
             if (m1) return { state:m1[1], city:m1[2].toUpperCase(), weekday:m1[3], month:m1[4], day:m1[5], timeRaw:m1[6]+m1[7].toLowerCase() };
-            // Format 2: freeform — 'Weekday, M/D at Hp' or 'Weekday, Month D at Hp'
             const MONTHS = {january:'1',february:'2',march:'3',april:'4',may:'5',june:'6',july:'7',august:'8',september:'9',october:'10',november:'11',december:'12'};
             const m2 = ctx.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*(?:(\d+)\/(\d+)|([A-Za-z]+)\s+(\d+))\s*at\s*([\d:]+)([ap])/i);
             if (m2) {
@@ -800,7 +798,7 @@
                         result.checks.push({field:'Time', icon:tOk?'✅':'❌', listed:normT, actual:dt.time+' '+dt.tz, ok:tOk});
                         if(!tOk) allOk=false;
                         const loc = ev.location;
-                        if (listed.state && loc&&loc.locality&&loc.region) {
+                        if (listed.state && listed.state && loc&&loc.locality&&loc.region) {
                             const lOk = loc.locality.toUpperCase()===listed.city && loc.region.toUpperCase()===listed.state.toUpperCase();
                             result.checks.push({field:'Location', icon:lOk?'✅':'❌', listed:listed.state+' ('+listed.city+')', actual:loc.region+' ('+loc.locality.toUpperCase()+')', ok:lOk});
                             if(!lOk) allOk=false;
@@ -817,7 +815,7 @@
                 return result;
             }
 
-            // General link check -- fetch server-side, extract page title + snippet
+            // General link check — route through server to avoid CORS/http-block issues
             try {
                 const chkRes = await fetch('/.netlify/functions/fetch-proof', {
                     method: 'POST',
@@ -825,33 +823,12 @@
                     body: JSON.stringify({url: href}),
                     signal: AbortSignal.timeout(12000)
                 });
-                // fetch-proof always returns HTTP 200; actual upstream status is in fetchedStatus
-                const data = await chkRes.json();
-                const s = data.fetchedStatus || 0;
-                if (s === 404) {
+                if (chkRes.status !== 404 && chkRes.status < 500) {
+                    result.status='pass'; result.icon='✅'; result.message='Reachable';
+                } else if (chkRes.status === 404) {
                     result.status='fail'; result.icon='❌'; result.message='404 Not Found';
-                } else if (s >= 200 && s < 500) {
-                    result.status='pass'; result.icon='✅';
-                    if (s === 400 || s === 401 || s === 403) {
-                        // Bot-blocked: server IS reachable, just won't serve us content
-                        result.message='Reachable (anti-bot protection active)';
-                        result.checks.push({field:'Note', icon:'⚠️', listed:'', actual:'Site is up but blocks automated access (' + s + '). Confirm manually.', ok:null});
-                    } else {
-                        try {
-                            if (data && data.html) {
-                                const parser = new DOMParser();
-                                const doc = parser.parseFromString(data.html, 'text/html');
-                                const title = (doc.querySelector('title') || {textContent:''}).textContent.trim();
-                                const paras = [...doc.querySelectorAll('h1,h2,h3,p')];
-                                const snippet = paras.map(p => p.textContent.replace(/\s+/g,' ').trim()).filter(t => t.length > 15).slice(0,2).join(' • ').substring(0,160);
-                                result.message = 'Reachable';
-                                if (title) result.checks.push({field:'Page title', icon:'ℹ️', listed:'', actual:title, ok:null});
-                                if (snippet) result.checks.push({field:'Content', icon:'ℹ️', listed:'', actual:snippet + (snippet.length >= 159 ? '…' : ''), ok:null});
-                            } else { result.message='Reachable'; }
-                        } catch(_) { result.message='Reachable'; }
-                    }
                 } else {
-                    result.status='warn'; result.icon='⚠️'; result.message='Server error ' + s + ' — check manually';
+                    result.status='warn'; result.icon='⚠️'; result.message='Server error ' + chkRes.status + ' — check manually';
                 }
             } catch(e) {
                 if (e.name==='AbortError'||e.name==='TimeoutError') {
@@ -859,7 +836,6 @@
                 } else {
                     result.status='warn'; result.icon='⚠️'; result.message='Could not verify — check manually';
                 }
-            }
             }
             return result;
         }
