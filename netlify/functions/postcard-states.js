@@ -27,8 +27,8 @@ exports.handler = async function(event, context) {
         if (!csrfMatch) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({ error: 'Could not find CSRF token on login page.' })
-            };
+                                    body: JSON.stringify({ error: 'Could not find CSRF token. Status: ' + loginPageRes.status + ' URL: ' + loginPageRes.url + ' Preview: ' + loginPageHtml.substring(0, 300) })
+                
         }
         const csrfToken = csrfMatch[1];
 
