@@ -1021,17 +1021,25 @@ Answer in this exact JSON format (no other text):
                 </div>${checks}${rememberBtn}</div>`;
         }
 
-        function lcRememberLink(href, label, btnEl) {
-            const MEM_KEY = 'blurbinator_approved_links_v1';
+        async function lcRememberLink(href, label, btnEl) {
+            btnEl.textContent = '⏳ Saving to app...';
+            btnEl.disabled = true;
             try {
-                const mem = JSON.parse(localStorage.getItem(MEM_KEY)||'{}');
-                mem[href] = label || href;
-                localStorage.setItem(MEM_KEY, JSON.stringify(mem));
-                btnEl.textContent = '✅ Remembered!';
-                btnEl.disabled = true;
-                btnEl.style.opacity = '0.6';
+                const res = await fetch('/.netlify/functions/add-approved-link', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({href, label: label || href})
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    btnEl.textContent = '✅ Saved! Live in ~60s';
+                    btnEl.style.opacity = '0.6';
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
             } catch(e) {
-                btnEl.textContent = '❌ Could not save';
+                btnEl.textContent = '❌ ' + e.message;
+                btnEl.disabled = false;
             }
         }
 
