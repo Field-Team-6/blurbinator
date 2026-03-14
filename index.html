@@ -883,6 +883,7 @@
             const isBlocked = (fetchStatus===403||fetchStatus===401||(fetchStatus===0&&pageHtml.length<500));
             if (isBlocked) {
                 result.status='warn'; result.icon='⚠️'; result.message='Site blocks automated reading — check manually';
+                result.aiVerified = true;
                 return result;
             }
 
@@ -919,17 +920,14 @@ Answer in this exact JSON format (no other text):
 {"correct": true/false, "confidence": "high"/"medium"/"low", "reason": "one sentence explanation"}`;
 
             try {
-                const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+                const aiRes = await fetch('/.netlify/functions/ai-check', {
                     method: 'POST',
                     headers: {'Content-Type':'application/json'},
-                    body: JSON.stringify({
-                        model: 'claude-sonnet-4-20250514',
-                        max_tokens: 150,
-                        messages: [{role:'user', content: aiPrompt}]
-                    })
+                    body: JSON.stringify({prompt: aiPrompt}),
+                    signal: AbortSignal.timeout(20000)
                 });
                 const aiData = await aiRes.json();
-                const raw = (aiData.content&&aiData.content[0]&&aiData.content[0].text)||'';
+                const raw = aiData.text || (aiData.content&&aiData.content[0]&&aiData.content[0].text) || '';
                 let verdict;
                 try { verdict = JSON.parse(raw.replace(/```json|```/g,'')); } catch(e){ verdict=null; }
 
@@ -953,8 +951,9 @@ Answer in this exact JSON format (no other text):
                     result.checks.push({field:'AI Check', icon:'❌', listed:newsletterCtx.substring(0,80), actual:verdict.reason, ok:false});
                 }
             } catch(e) {
-                // AI call failed (e.g. no extension) — fall back to reachability
+                // AI call failed — fall back to reachability, still show remember button
                 result.status='pass'; result.icon='✅'; result.message='Reachable (AI unavailable)';
+                result.aiVerified = true;
             }
             return result;
         }
