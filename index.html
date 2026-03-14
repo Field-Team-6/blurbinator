@@ -705,9 +705,18 @@
 
         function lcParseListedEvent(ctx) {
             if (!ctx) return null;
-            const m = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(\d+)\/(\d+)(?:\s*\([^)]*\))?\s*at\s*([\d:]+)([ap])/i);
-            if (!m) return null;
-            return { state:m[1], city:m[2].toUpperCase(), weekday:m[3], month:m[4], day:m[5], timeRaw:m[6]+m[7].toLowerCase() };
+            // Format 1: in-person drives — STATE (CITY) – Weekday, M/D at Hp
+            const m1 = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(\d+)\/(\d+)(?:\s*\([^)]*\))?\s*at\s*([\d:]+)([ap])/i);
+            if (m1) return { state:m1[1], city:m1[2].toUpperCase(), weekday:m1[3], month:m1[4], day:m1[5], timeRaw:m1[6]+m1[7].toLowerCase() };
+            // Format 2: freeform — 'Weekday, M/D at Hp' or 'Weekday, Month D at Hp'
+            const MONTHS = {january:'1',february:'2',march:'3',april:'4',may:'5',june:'6',july:'7',august:'8',september:'9',october:'10',november:'11',december:'12'};
+            const m2 = ctx.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*(?:(\d+)\/(\d+)|([A-Za-z]+)\s+(\d+))\s*at\s*([\d:]+)([ap])/i);
+            if (m2) {
+                let month = m2[2], day = m2[3];
+                if (!month && m2[4]) { month = MONTHS[m2[4].toLowerCase()] || m2[4]; day = m2[5]; }
+                return { state:null, city:null, weekday:m2[1], month, day, timeRaw:m2[6]+m2[7].toLowerCase() };
+            }
+            return null;
         }
 
         function lcNormTime(raw) {
@@ -791,7 +800,7 @@
                         result.checks.push({field:'Time', icon:tOk?'✅':'❌', listed:normT, actual:dt.time+' '+dt.tz, ok:tOk});
                         if(!tOk) allOk=false;
                         const loc = ev.location;
-                        if (loc&&loc.locality&&loc.region) {
+                        if (listed.state && loc&&loc.locality&&loc.region) {
                             const lOk = loc.locality.toUpperCase()===listed.city && loc.region.toUpperCase()===listed.state.toUpperCase();
                             result.checks.push({field:'Location', icon:lOk?'✅':'❌', listed:listed.state+' ('+listed.city+')', actual:loc.region+' ('+loc.locality.toUpperCase()+')', ok:lOk});
                             if(!lOk) allOk=false;
@@ -799,7 +808,7 @@
                     } else {
                         result.checks.push({field:'DateTime', icon:'ℹ️', listed:'(no newsletter text found to compare)', actual:dt.full, ok:null});
                         const loc=ev.location;
-                        result.checks.push({field:'Location', icon:'ℹ️', listed:'', actual:loc?(loc.region+' ('+loc.locality.toUpperCase()+')') :'Unknown', ok:null});
+                        result.checks.push({field:'Location', icon:'ℹ️', listed:'', actual:(loc&&loc.locality)?(loc.region+' ('+loc.locality.toUpperCase()+')') : '💻 Virtual event', ok:null});
                     }
                 }
                 result.status=allOk?'pass':'fail';
@@ -816,12 +825,12 @@
                     body: JSON.stringify({url: href}),
                     signal: AbortSignal.timeout(12000)
                 });
-                if (chkRes.ok) {
+                if (chkRes.status !== 404 && chkRes.status < 500) {
                     result.status='pass'; result.icon='✅'; result.message='Reachable';
                 } else if (chkRes.status === 404) {
                     result.status='fail'; result.icon='❌'; result.message='404 Not Found';
                 } else {
-                    result.status='warn'; result.icon='⚠️'; result.message='Server returned ' + chkRes.status;
+                    result.status='warn'; result.icon='⚠️'; result.message='Server error ' + chkRes.status + ' — check manually';
                 }
             } catch(e) {
                 if (e.name==='AbortError'||e.name==='TimeoutError') {
