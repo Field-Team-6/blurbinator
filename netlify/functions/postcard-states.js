@@ -1,59 +1,155 @@
-// Netlify serverless function: postcard-states.js - DEBUG v2
+// Netlify serverless function: postcard-states.js
+// Logs into postcards.fieldteam6.org (Flask/PersonToPerson app) and returns campaign list.
+// Credentials stored as Netlify environment variables, never in code.
+
 exports.handler = async function(event, context) {
     const BASE = 'https://postcards.fieldteam6.org';
     const EMAIL = process.env.POSTCARD_EMAIL;
     const PASSWORD = process.env.POSTCARD_PASSWORD;
 
+    if (!EMAIL || !PASSWORD) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Credentials not configured in environment variables.' })
+        };
+    }
+
     try {
-        // Step 1: GET /login to get session cookie + CSRF token
+        // ── Step 1: GET /login to obtain session cookie + CSRF token ──
         const loginPageRes = await fetch(`${BASE}/login`, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             redirect: 'follow'
         });
+
         const loginPageHtml = await loginPageRes.text();
         const setCookieRaw = loginPageRes.headers.get('set-cookie') || '';
-        const sessionCookie = setCookieRaw.split(';')[0];
+        const sessionCookie = setCookieRaw.split(';')[0]; // e.g. session=eyJ...
 
-        // Decode CSRF from Flask session cookie (base64url JSON payload)
-        let csrfFromCookie = null;
-        try {
-            const sessionVal = sessionCookie.split('=').slice(1).join('=');
-            const payloadB64 = sessionVal.split('.')[0];
-            const padded = payloadB64 + '=='.slice(0, (4 - payloadB64.length % 4) % 4);
-            const decoded = JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
-            csrfFromCookie = decoded.csrf_token;
-        } catch(e) { csrfFromCookie = 'decode-error: ' + e.message; }
+        if (!sessionCookie) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({ error: 'No session cookie from login page. Status: ' + loginPageRes.status })
+            };
+        }
 
-        // Extract hidden inputs from login form HTML
-        const hiddenMatches = [...loginPageHtml.matchAll(/<input[^>]+type=["']hidden["'][^>]*>/gi)];
-        const hiddenInputs = hiddenMatches.map(m => {
-            const nameM = m[0].match(/name=["']([^"']+)["']/);
-            const valM = m[0].match(/value=["']([^"']*)/);
-            return { name: nameM ? nameM[1] : null, value: valM ? valM[1].substring(0,40) : null };
+        // Extract csrf_token from the hidden input in the login form
+        // Flask-WTF puts it as: <input id="csrf_token" name="csrf_token" type="hidden" value="...">
+        const csrfMatch = loginPageHtml.match(/name=["']csrf_token["'][^>]*value=["']([^"']+)["']/) ||
+                          loginPageHtml.match(/value=["']([^"']+)["'][^>]*name=["']csrf_token["']/);
+
+        if (!csrfMatch) {
+            return {
+                statusCode: 500,
+                body: JSON.stringify({
+                    error: 'Could not find csrf_token in login form.',
+                    status: loginPageRes.status,
+                    preview: loginPageHtml.substring(0, 400)
+                })
+            };
+        }
+
+        const csrfToken = csrfMatch[1];
+
+        // ── Step 2: POST credentials to /login ──
+        const loginBody = new URLSearchParams({
+            'csrf_token': csrfToken,
+            'email': EMAIL,
+            'password': PASSWORD,
+            'next': ''
         });
 
-        // Also look for csrf_token meta tag
-        const csrfMetaMatch = loginPageHtml.match(/name=["']csrf[_-]token["'][^>]*content=["']([^"']+)["']/i) ||
-                              loginPageHtml.match(/content=["']([^"']+)["'][^>]*name=["']csrf[_-]token["']/i);
+        const loginRes = await fetch(`${BASE}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Cookie': sessionCookie,
+                'User-Agent': 'Mozilla/5.0',
+                'Referer': `${BASE}/login`
+            },
+            body: loginBody.toString(),
+            redirect: 'manual' // Catch the redirect so we can grab the new session cookie
+        });
 
-        // Find form action
-        const formActionMatch = loginPageHtml.match(/<form[^>]+action=["']([^"']+)["']/i);
+        // Get the authenticated session cookie from the POST response
+        const authCookieRaw = loginRes.headers.get('set-cookie') || '';
+        const authCookie = authCookieRaw.split(';')[0];
+
+        // If no new cookie, the login may have failed — try using original session anyway
+        const cookieToUse = authCookie || sessionCookie;
+
+        if (!authCookie) {
+            return {
+                statusCode: 401,
+                body: JSON.stringify({
+                    error: 'Login POST did not return a new session cookie — credentials may be wrong.',
+                    loginStatus: loginRes.status
+                })
+            };
+        }
+
+        // ── Step 3: Fetch /select_campaign with authenticated session ──
+        const campaignRes = await fetch(`${BASE}/select_campaign`, {
+            headers: {
+                'Cookie': cookieToUse,
+                'User-Agent': 'Mozilla/5.0'
+            },
+            redirect: 'follow'
+        });
+
+        if (!campaignRes.ok) {
+            return {
+                statusCode: campaignRes.status,
+                body: JSON.stringify({ error: 'Campaign page returned ' + campaignRes.status + '. Final URL: ' + campaignRes.url })
+            };
+        }
+
+        const campaignHtml = await campaignRes.text();
+
+        // Verify we actually got the campaign page (not redirected back to login)
+        if (campaignRes.url.includes('/login') || campaignHtml.includes('Log In') && !campaignHtml.includes('select_campaign')) {
+            return {
+                statusCode: 401,
+                body: JSON.stringify({ error: 'Redirected to login — authentication failed. Final URL: ' + campaignRes.url })
+            };
+        }
+
+        // ── Step 4: Parse campaign <option> elements ──
+        // Options look like: <option value="1">AZ-01 - Voter Registration Outreach - ...</option>
+        const optionMatches = [...campaignHtml.matchAll(/<option[^>]*>([^<]+)<\/option>/g)];
+        const options = optionMatches
+            .map(m => m[1].trim())
+            .filter(t => t.length > 0 && !t.toLowerCase().includes('select'));
+
+        // Extract unique 2-letter state abbreviations
+        const stateSet = new Set();
+        options.forEach(text => {
+            const match = text.match(/^([A-Z]{2})[\s\-]/);
+            if (match) stateSet.add(match[1]);
+        });
+
+        const states = Array.from(stateSet).sort();
+
+        if (states.length === 0) {
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+                body: JSON.stringify({ states: [], options, warning: 'No state abbreviations found. Check option format.', urlFetched: campaignRes.url })
+            };
+        }
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-            body: JSON.stringify({
-                loginStatus: loginPageRes.status,
-                finalUrl: loginPageRes.url,
-                sessionCookiePreview: sessionCookie.substring(0, 80),
-                csrfFromCookie,
-                hiddenInputs,
-                csrfMeta: csrfMetaMatch ? csrfMetaMatch[1] : null,
-                formAction: formActionMatch ? formActionMatch[1] : null,
-                htmlSnippet: loginPageHtml.substring(2800, 4000)
-            })
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            body: JSON.stringify({ states, options })
         };
+
     } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ error: err.message }) };
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ error: err.message })
+        };
     }
 };
