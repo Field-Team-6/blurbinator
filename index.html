@@ -395,6 +395,70 @@
             transition: width 0.3s ease;
             width: 0%;
         }
+        /* ── Tool 4: Proofread results ── */
+        .proof-issue {
+            border-left: 4px solid #e2e8f0;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+            background: #f7fafc;
+        }
+        .proof-issue.error   { border-color: #fc8181; background: #fff5f5; }
+        .proof-issue.warning { border-color: #f6e05e; background: #fffff0; }
+        .proof-issue.info    { border-color: #90cdf4; background: #ebf8ff; }
+        .proof-issue-type {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .proof-issue.error   .proof-issue-type { color: #c53030; }
+        .proof-issue.warning .proof-issue-type { color: #7b6800; }
+        .proof-issue.info    .proof-issue-type { color: #2b6cb0; }
+        .proof-issue-desc {
+            font-size: 14px;
+            color: #2d3748;
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+        .proof-issue-quote {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #718096;
+            background: rgba(0,0,0,0.04);
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-bottom: 4px;
+            display: inline-block;
+            max-width: 100%;
+            overflow-wrap: break-word;
+        }
+        .proof-issue-fix {
+            font-size: 13px;
+            color: #276749;
+            font-style: italic;
+        }
+        .proof-clean {
+            background: #c6f6d5;
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            color: #276749;
+            font-size: 16px;
+            text-align: center;
+        }
+        .proof-section-head {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #718096;
+            margin: 20px 0 8px;
+        }
     </style>
 </head>
 <body>
@@ -481,6 +545,29 @@
         </div>
     </div>
 
+
+    <!-- ── TOOL 4: Proofread Newsletter ── -->
+    <div class="container">
+        <div class="card-header" onclick="toggleCard('proofread')">
+            <h2 class="tool-title">✏️ Proofread Newsletter</h2>
+            <span class="card-chevron">▼</span>
+        </div>
+        <div class="card-body" id="proofreadBody">
+            <div class="info">
+                Uses AI to proofread the newsletter for typos, capitalization errors, profanity, double spaces, hyphenation, name spelling, hotlink punctuation, and font consistency. Auto-fills from the Proof Link Checker URL if already entered.
+            </div>
+            <label class="input-label">Newsletter proof URL</label>
+            <input type="text" class="url-input" id="proofreadUrl"
+                placeholder="https://campaignlp.constantcontact.com/em/..." />
+            <button class="generate-btn" id="proofreadBtn" onclick="runProofread()">
+                ✏️ Proofread Newsletter
+            </button>
+            <div id="proofreadError" class="error" style="display:none;"></div>
+            <div id="proofreadOutput" class="output-section">
+                <div id="proofreadResults"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ════════════════════════════════════════
@@ -1252,6 +1339,163 @@ Answer in this exact JSON format (no other text):
 
             // Update summary pills to be clickable toggles
             lcRenderPills(sumDiv, total, total, cats);
+        }
+
+        // ════════════════════════════════════════
+        // TOOL 4 – Proofread Newsletter
+        // ════════════════════════════════════════
+
+        // Auto-fill URL from Tool 3 when card opens
+        const _origToggle = toggleCard;
+        toggleCard = function(id) {
+            _origToggle(id);
+            if (id === 'proofread') {
+                const src = document.getElementById('proofUrl');
+                const dst = document.getElementById('proofreadUrl');
+                if (src && dst && src.value && !dst.value) dst.value = src.value;
+            }
+        };
+
+        async function runProofread() {
+            const btn = document.getElementById('proofreadBtn');
+            const errDiv = document.getElementById('proofreadError');
+            const output = document.getElementById('proofreadOutput');
+            const results = document.getElementById('proofreadResults');
+
+            errDiv.style.display = 'none';
+            output.classList.remove('visible');
+            results.innerHTML = '';
+            btn.disabled = true;
+            btn.innerHTML = 'Fetching newsletter<span class="loading"></span>';
+
+            try {
+                const url = document.getElementById('proofreadUrl').value.trim();
+                if (!url) throw new Error('Please enter a newsletter proof URL.');
+
+                // Fetch the newsletter HTML
+                const proofRes = await fetch('/.netlify/functions/fetch-proof', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({url}),
+                    signal: AbortSignal.timeout(20000)
+                });
+                const proofData = await proofRes.json();
+                if (!proofData.html) throw new Error(proofData.error || 'Could not fetch newsletter.');
+
+                btn.innerHTML = 'Reading newsletter<span class="loading"></span>';
+
+                // Parse HTML — extract readable text AND a link-audit version
+                const doc = new DOMParser().parseFromString(proofData.html, 'text/html');
+
+                // Extract plain text for general proofreading
+                doc.querySelectorAll('script,style,img').forEach(el=>el.remove());
+                const plainText = (doc.body||doc.documentElement).innerText || doc.body.textContent || '';
+
+                // Extract link audit: for each <a>, capture {text, href, trailingChar}
+                const linkAudit = [];
+                const rawDoc = new DOMParser().parseFromString(proofData.html, 'text/html');
+                rawDoc.querySelectorAll('a[href]').forEach(a => {
+                    const text = a.textContent.trim();
+                    const href = a.getAttribute('href') || '';
+                    if (href.startsWith('mailto:') || href.startsWith('#') || !text) return;
+                    // Check what immediately follows the </a> in the parent
+                    let nextChar = '';
+                    const next = a.nextSibling;
+                    if (next && next.nodeType === 3) nextChar = next.textContent.trimStart().charAt(0);
+                    // Check if link text itself ends in punctuation
+                    const lastChar = text.slice(-1);
+                    const endsInPunct = /[.,;:!?]/.test(lastChar);
+                    linkAudit.push({text: text.substring(0,80), href: href.substring(0,100), endsInPunct, lastChar, nextChar});
+                });
+
+                // Extract font/style audit: look for inline styles on text elements
+                const styleAudit = [];
+                rawDoc.querySelectorAll('p,td,div,span,li').forEach(el => {
+                    const style = el.getAttribute('style') || '';
+                    const text = el.textContent.trim().substring(0,60);
+                    if (!text || text.length < 5) return;
+                    const hasFont = style.includes('font');
+                    if (hasFont) {
+                        const badFont = !style.includes('Arial') && !style.includes('arial');
+                        const badSize = style.includes('font-size') && !style.includes('16px') && !style.includes('font-size:16') && !style.includes('font-size: 16');
+                        const badColor = style.includes('color') && !style.includes('#1f3864') && !style.includes('rgb(31, 56, 100)');
+                        if (badFont || badSize || badColor) {
+                            styleAudit.push({text, style: style.substring(0,120), badFont, badSize, badColor});
+                        }
+                    }
+                });
+
+                btn.innerHTML = 'Proofreading<span class="loading"></span>';
+
+                // Build AI prompt
+                const prompt = `You are a meticulous proofreader for Field Team 6, a voter registration nonprofit. Review the newsletter text below and identify ALL issues in these specific categories. Be thorough but only flag real problems.
+
+RULES TO CHECK:
+1. TYPOS & GRAMMAR: spelling errors, wrong words, grammatical mistakes
+2. PARTY CAPITALIZATION: "democrat" or "democratic" (lowercase) when referring to the Democratic Party or its members must be "Democrat" or "Democratic" (capitalized). Note: "democratic" as a general adjective ("democratic values") is fine lowercase.
+3. PROFANITY: flag any profanity or potentially offensive language (informational — may be intentional)
+4. DOUBLE SPACES: two or more spaces between sentences or words
+5. IN-PERSON HYPHENATION: "in-person" is correct as an adjective before a noun ("in-person event"). Without a noun following, it should be "in person" ("join us in person"). Flag incorrect uses.
+6. PEOPLE & ORG NAMES: flag any names that appear misspelled or inconsistent (e.g. "ActBlue" not "Actblue", "Mobilize" not "mobilize")
+7. HOTLINK PUNCTUATION: flag cases where a period, comma, or other punctuation appears to be INSIDE a hyperlink at the end of a sentence (the link text itself ends in punctuation). Based on this data: ${JSON.stringify(linkAudit.filter(l=>l.endsInPunct).slice(0,20))}
+
+FONT ISSUES DETECTED BY PARSER (report these if present): ${styleAudit.length > 0 ? JSON.stringify(styleAudit.slice(0,10)) : 'None detected'}
+
+NEWSLETTER TEXT TO PROOFREAD:
+${plainText.substring(0, 6000)}
+
+Respond ONLY with a JSON array of issues. Each issue: {"severity":"error"|"warning"|"info","category":"TYPO"|"CAPITALIZATION"|"PROFANITY"|"DOUBLE SPACE"|"HYPHENATION"|"NAME"|"HOTLINK"|"FONT","description":"what is wrong","quote":"the exact offending text (max 80 chars)","fix":"suggested correction"}
+If NO issues found, return an empty array: []
+Return ONLY the JSON array, no other text.`;
+
+                const aiRes = await fetch('/.netlify/functions/ai-check', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({prompt}),
+                    signal: AbortSignal.timeout(45000)
+                });
+                const aiData = await aiRes.json();
+                const raw = (aiData.text || '').replace(/```json|```/g,'').trim();
+
+                let issues = [];
+                try { issues = JSON.parse(raw); } catch(e) { throw new Error('AI returned unparseable response. Try again.'); }
+
+                // Render results
+                output.classList.add('visible');
+                if (!issues.length) {
+                    results.innerHTML = '<div class="proof-clean">✅ No issues found — newsletter looks clean!</div>';
+                } else {
+                    // Group by category
+                    const cats = {};
+                    issues.forEach(issue => {
+                        const cat = issue.category || 'OTHER';
+                        if (!cats[cat]) cats[cat] = [];
+                        cats[cat].push(issue);
+                    });
+                    const catIcons = {TYPO:'🔤',CAPITALIZATION:'🏛️',PROFANITY:'🤬',['DOUBLE SPACE']:'␣',HYPHENATION:'➖',NAME:'👤',HOTLINK:'🔗',FONT:'🎨',OTHER:'⚠️'};
+                    let html = '<div style="font-family:Raleway,sans-serif;font-weight:800;font-size:14px;color:#2d3748;margin-bottom:16px;">' + issues.length + ' issue' + (issues.length!==1?'s':'') + ' found</div>';
+                    Object.keys(cats).forEach(cat => {
+                        html += '<div class="proof-section-head">' + (catIcons[cat]||'⚠️') + ' ' + cat + ' (' + cats[cat].length + ')</div>';
+                        cats[cat].forEach(issue => {
+                            const sev = issue.severity || 'warning';
+                            html += '<div class="proof-issue ' + sev + '">';
+                            html += '<div class="proof-issue-type">' + escH(issue.category||'') + '</div>';
+                            html += '<div class="proof-issue-desc">' + escH(issue.description||'') + '</div>';
+                            if (issue.quote) html += '<div class="proof-issue-quote">' + escH(issue.quote) + '</div>';
+                            if (issue.fix) html += '<div class="proof-issue-fix">→ ' + escH(issue.fix) + '</div>';
+                            html += '</div>';
+                        });
+                    });
+                    results.innerHTML = html;
+                }
+
+            } catch(e) {
+                errDiv.textContent = 'Error: ' + e.message;
+                errDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✏️ Proofread Newsletter';
+            }
         }
 
     </script>
