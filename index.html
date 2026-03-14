@@ -840,8 +840,41 @@
             // General link check — fetch page content then use AI to verify it matches newsletter context
             // Memory helpers
             const MEM_KEY = 'blurbinator_approved_links_v1';
-            function memLoad() { try { return JSON.parse(localStorage.getItem(MEM_KEY)||'{}'); } catch(e){ return {}; } }
-            function memSave(m) { try { localStorage.setItem(MEM_KEY, JSON.stringify(m)); } catch(e){} }
+            // Hardcoded approved links — shared by all users on all browsers.
+            // Add permanent links here so Dale and everyone else gets them automatically.
+            const HARDCODED_APPROVED = {
+                'http://www.voterizer.org': 'REGISTER — voter registration tool',
+                'https://voterizer.org': 'REGISTER — voter registration tool',
+                'https://www.voterizer.org': 'REGISTER — voter registration tool',
+                'https://www.fieldteam6.org/all-volunteer-ops': 'VOLUNTEER OPS — FT6 volunteer opportunities page',
+                'https://www.fieldteam6.org/voter-drive-in-a-box': 'Voter Drive in a Box — FT6 voter drive resources',
+                'https://www.fieldteam6.org/printable-tools': 'Printable Tools — FT6 printable voter drive tools',
+                'https://www.fieldteam6.org/store': 'FT6 store — t-shirts and merchandise',
+                'https://field-team-6.checkoutstores.com/': 'FT6 store — t-shirts and merchandise',
+                'http://fieldteam6.org': 'fieldteam6.org — FT6 main website',
+                'https://www.fieldteam6.org': 'fieldteam6.org — FT6 main website',
+                'http://www.fieldteam6.org': 'fieldteam6.org — FT6 main website',
+                'https://bsky.app/profile/fieldteam6.org': 'BLUESKY — FT6 Bluesky social account',
+                'https://www.instagram.com/fieldteam6/': 'INSTAGRAM — FT6 Instagram account',
+                'https://www.facebook.com/fieldteam6/': 'FACEBOOK — FT6 Facebook page',
+                'https://www.tiktok.com/@fieldteam6_tok': 'TIKTOK — FT6 TikTok account',
+                'https://www.youtube.com/channel/UCOPJNilwi43_rYujdg28bCA/playlists': 'YOUTUBE — FT6 YouTube channel',
+                'https://www.constantcontact.com/legal/customer-contact-data-notice': 'Constant Contact Data Notice — required footer link',
+                'https://www.nokings.org/?SQF_SOURCE=fieldteam6': 'No Kings protest finder — find nearest protest',
+                'https://bluevoterguide.org/': 'BlueVoterGuide.org — down-ballot voting guide',
+                'http://www.pleasegrowaspine.org': 'PleaseGrowASpine.org — FT6 social media tool',
+            };
+            function memLoad() {
+                // Merge hardcoded list with any localStorage additions
+                const local = (() => { try { return JSON.parse(localStorage.getItem(MEM_KEY)||'{}'); } catch(e){ return {}; } })();
+                return Object.assign({}, HARDCODED_APPROVED, local);
+            }
+            function memSave(m) {
+                // Only save non-hardcoded entries to localStorage
+                const toSave = {};
+                Object.keys(m).forEach(k => { if (!HARDCODED_APPROVED[k]) toSave[k] = m[k]; });
+                try { localStorage.setItem(MEM_KEY, JSON.stringify(toSave)); } catch(e){}
+            }
 
             // Check memory first — if this href was previously approved, auto-pass
             const mem = memLoad();
@@ -972,7 +1005,8 @@ Answer in this exact JSON format (no other text):
             const title = r.eventTitle ? escH(r.eventTitle) : (r.linkText ? escH(r.linkText) : '');
             const shortUrl = r.href.length>72 ? r.href.substring(0,69)+'...' : r.href;
             // "Always approve" button for AI-verified links (not already remembered)
-            const rememberBtn = (r.aiVerified && !r.remembered)
+            const isHardcoded = r.remembered && r.checks && r.checks[0] && r.checks[0].listed && r.checks[0].listed.startsWith('Previously approved');
+            const rememberBtn = r.aiVerified && !r.remembered
                 ? `<div style="padding:8px 16px 12px 46px;"><button onclick="lcRememberLink('${escH(r.href)}','${escH((r.linkText||r.href).replace(/'/g,''))}',this)" style="background:#02013C;color:white;border:none;padding:6px 14px;border-radius:6px;font-family:Raleway,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">💾 Always approve this link</button></div>`
                 : '';
             return `<div class="result-card ${r.status}">
