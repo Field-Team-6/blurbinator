@@ -48,7 +48,7 @@
             overflow: hidden;
         }
 
-        /* Card header bar with collapse toggle */
+        /* Card header — clickable, no button */
         .card-header {
             display: flex;
             align-items: center;
@@ -57,10 +57,10 @@
             cursor: pointer;
             user-select: none;
             border-bottom: 2px solid transparent;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background 0.15s;
         }
-        .card-header:hover { border-bottom-color: #e2e8f0; }
-        .card-header.collapsed { border-bottom-color: transparent; }
+        .card-header:hover { background: #f7fafc; }
+        .card-header.open { border-bottom-color: #e2e8f0; }
 
         .tool-title {
             font-family: 'Raleway', sans-serif;
@@ -70,34 +70,32 @@
             margin: 0;
         }
 
-        .collapse-btn {
-            background: none;
-            border: 2px solid #02013C;
+        /* Chevron indicator */
+        .card-chevron {
+            font-size: 18px;
             color: #02013C;
-            border-radius: 6px;
-            font-family: 'Raleway', sans-serif;
-            font-weight: 700;
-            font-size: 13px;
-            padding: 6px 14px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
-            white-space: nowrap;
-            box-shadow: none;
+            transition: transform 0.3s ease;
+            flex-shrink: 0;
+            margin-left: 16px;
+            opacity: 0.5;
         }
-        .collapse-btn:hover { background: #02013C; color: white; }
-
-        /* Card body — slides open/closed */
-        .card-body {
-            padding: 0 40px 40px;
-            transition: max-height 0.35s ease, opacity 0.3s ease;
-            max-height: 2000px;
+        .card-header.open .card-chevron {
+            transform: rotate(180deg);
             opacity: 1;
-            overflow: hidden;
         }
-        .card-body.collapsed {
+
+        /* Card body — slides open/closed. Starts collapsed. */
+        .card-body {
+            padding: 0 40px;
+            transition: max-height 0.35s ease, opacity 0.3s ease;
             max-height: 0;
             opacity: 0;
-            padding-bottom: 0;
+            overflow: hidden;
+        }
+        .card-body.open {
+            max-height: 2000px;
+            opacity: 1;
+            padding-bottom: 40px;
         }
 
         .info {
@@ -131,18 +129,19 @@
         .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         .copy-button {
-            background: #48bb78;
-            color: white;
+            background: #3D9BE9;
+            color: #02013C;
             border: none;
             padding: 12px 24px;
             border-radius: 8px;
+            font-family: 'Raleway', sans-serif;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 12px rgba(72,187,120,0.3);
+            box-shadow: 0 4px 12px rgba(61,155,233,0.35);
         }
-        .copy-button:hover { background: #38a169; transform: translateY(-2px); }
+        .copy-button:hover { background: #2b87d4; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(61,155,233,0.5); }
         .copy-button:active { transform: translateY(0); }
 
         /* ── Output areas ── */
@@ -215,7 +214,7 @@
     <div class="container">
         <div class="card-header" onclick="toggleCard('voterDrive')">
             <h2 class="tool-title">🗳️ Voter Drive List Generator</h2>
-            <button class="collapse-btn" id="voterDriveToggle" onclick="event.stopPropagation(); toggleCard('voterDrive')">Collapse ▲</button>
+            <span class="card-chevron">▼</span>
         </div>
         <div class="card-body" id="voterDriveBody">
             <div class="info">
@@ -239,7 +238,7 @@
     <div class="container">
         <div class="card-header" onclick="toggleCard('postcard')">
             <h2 class="tool-title">📬 Postcarding States Generator</h2>
-            <button class="collapse-btn" id="postcardToggle" onclick="event.stopPropagation(); toggleCard('postcard')">Collapse ▲</button>
+            <span class="card-chevron">▼</span>
         </div>
         <div class="card-body" id="postcardBody">
             <div class="info">
@@ -262,14 +261,19 @@
     <script>
         // ════════════════════════════════════════
         // Collapse / expand cards
+        // Cards start collapsed; click header to open, click again to close
         // ════════════════════════════════════════
         function toggleCard(id) {
-            const body = document.getElementById(id + 'Body');
-            const btn  = document.getElementById(id + 'Toggle');
+            const body   = document.getElementById(id + 'Body');
             const header = body.previousElementSibling;
-            const collapsed = body.classList.toggle('collapsed');
-            header.classList.toggle('collapsed', collapsed);
-            btn.textContent = collapsed ? 'Expand ▼' : 'Collapse ▲';
+            const isOpen = body.classList.contains('open');
+            if (isOpen) {
+                body.classList.remove('open');
+                header.classList.remove('open');
+            } else {
+                body.classList.add('open');
+                header.classList.add('open');
+            }
         }
 
         // ════════════════════════════════════════
@@ -368,8 +372,6 @@
 
         // ════════════════════════════════════════
         // TOOL 2 – Postcarding States Generator
-        // Calls the Netlify serverless function which
-        // handles login server-side (no CORS issues)
         // ════════════════════════════════════════
         async function generatePostcardStates() {
             const btn = document.getElementById('postcardBtn');
@@ -399,7 +401,6 @@
 
                 const states = data.states;
 
-                // Format as newsletter blurb with Oxford comma
                 const stateList = states.length === 1
                     ? states[0]
                     : states.slice(0, -1).join(', ') + ', and ' + states[states.length - 1];
