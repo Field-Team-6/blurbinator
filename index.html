@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FT6 Event List Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .output-section {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .output-section.visible {
+            display: block;
+        }
+
+        .output-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #2d3748;
+        }
+
+        .copy-button {
+            background: #48bb78;
+            padding: 12px 24px;
+            font-size: 14px;
+        }
+
+        .copy-button:hover {
+            background: #38a169;
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+        }
+
+        .loading {
+            display: inline-block;
+            margin-left: 8px;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+            color: #c53030;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .info {
+            background: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 16px;
+            margin-bottom: 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #2c5282;
+        }
+
+        .count {
+            font-weight: 600;
+            color: #667eea;
+            margin-top: 16px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗳️ Field Team 6 Event List Generator</h1>
+        <p class="subtitle">Generate formatted voter drive event listings for your newsletter</p>
+
+        <div class="info">
+            <strong>What this does:</strong> Fetches all upcoming in-person voter registration drives from Mobilize and formats them ready to paste into your newsletter. Automatically excludes trainings.
+        </div>
+
+        <button id="generateBtn" onclick="generateEventList()">
+            Generate Event List
+        </button>
+
+        <div id="output" class="output-section">
+            <div class="count" id="eventCount"></div>
+            <div class="output-box" id="outputText"></div>
+            <button class="copy-button" onclick="copyToClipboard()">
+                📋 Copy to Clipboard
+            </button>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        const ORG_ID = 1255;
+        const API_BASE = 'https://api.mobilize.us/v1';
+
+        async function generateEventList() {
+            const btn = document.getElementById('generateBtn');
+            const output = document.getElementById('output');
+            const outputText = document.getElementById('outputText');
+            const errorDiv = document.getElementById('error');
+            const eventCount = document.getElementById('eventCount');
+
+            // Reset
+            output.classList.remove('visible');
+            errorDiv.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = 'Fetching events<span class="loading"></span>';
+
+            try {
+                // Fetch events
+                const url = `${API_BASE}/organizations/${ORG_ID}/events?` + 
+                    `timeslot_start=gte_now&` +
+                    `event_types=VOTER_REG&` +
+                    `per_page=100`;
+
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`API returned ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.data || data.data.length === 0) {
+                    throw new Error('No upcoming voter registration events found');
+                }
+
+                // Filter and format events
+                const events = data.data
+                    .filter(event => {
+                        // Exclude trainings
+                        const title = event.title.toLowerCase();
+                        return !title.includes('training');
+                    })
+                    .filter(event => {
+                        // Only in-person events
+                        return !event.is_virtual;
+                    })
+                    .filter(event => {
+                        // Must have location
+                        return event.location && event.location.locality && event.location.region;
+                    })
+                    .map(event => {
+                        // Get the earliest future timeslot
+                        const now = Math.floor(Date.now() / 1000);
+                        const futureTimeslots = event.timeslots
+                            .filter(ts => ts.start_date > now)
+                            .sort((a, b) => a.start_date - b.start_date);
+
+                        if (futureTimeslots.length === 0) return null;
+
+                        const timeslot = futureTimeslots[0];
+                        const date = new Date(timeslot.start_date * 1000);
+                        
+                        // Format: "GA (SAVANNAH) – Saturday, 3/14 at 9:30a. RSVP HERE."
+                        const state = event.location.region;
+                        const city = event.location.locality.toUpperCase();
+                        
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        const dayName = days[date.getDay()];
+                        
+                        const month = date.getMonth() + 1;
+                        const day = date.getDate();
+                        
+                        let hours = date.getHours();
+                        const minutes = date.getMinutes();
+                        const ampm = hours >= 12 ? 'p' : 'a';
+                        hours = hours % 12 || 12;
+                        
+                        const timeStr = minutes === 0 
+                            ? `${hours}${ampm}` 
+                            : `${hours}:${minutes.toString().padStart(2, '0')}${ampm}`;
+                        
+                        const url = event.browser_url;
+                        
+                        return {
+                            date: timeslot.start_date,
+                            formatted: `${state} (${city}) – ${dayName}, ${month}/${day} at ${timeStr}. RSVP HERE.`,
+                            url: url
+                        };
+                    })
+                    .filter(event => event !== null)
+                    .sort((a, b) => a.date - b.date);
+
+                if (events.length === 0) {
+                    throw new Error('No qualifying events found after filtering');
+                }
+
+                // Format output
+                const formattedList = events.map(e => `• ${e.formatted}`).join('\n');
+                
+                outputText.textContent = formattedList;
+                eventCount.textContent = `Found ${events.length} upcoming voter drive${events.length !== 1 ? 's' : ''}`;
+                output.classList.add('visible');
+
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = `Error: ${error.message}. Try refreshing the page or contact jason@fieldteam6.org if this persists.`;
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Generate Event List';
+            }
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('outputText').textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
