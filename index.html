@@ -201,6 +201,182 @@
             40% { content: '..'; }
             60%,100% { content: '...'; }
         }
+
+        /* ── Link Checker extras ── */
+        .input-label {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .url-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #2d3748;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .url-input:focus { border-color: #4299e1; }
+        .html-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #2d3748;
+            margin-bottom: 16px;
+            min-height: 100px;
+            resize: vertical;
+            transition: border-color 0.2s;
+            outline: none;
+        }
+        .html-input:focus { border-color: #4299e1; }
+        .or-divider {
+            text-align: center;
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            color: #a0aec0;
+            margin: 4px 0 16px;
+            position: relative;
+        }
+        .or-divider::before, .or-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 42%;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        .or-divider::before { left: 0; }
+        .or-divider::after  { right: 0; }
+        .results-section { margin-top: 32px; display: none; }
+        .results-section.visible { display: block; }
+        .results-summary { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .summary-pill {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 7px 16px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pill-total { background: #edf2f7; color: #2d3748; }
+        .pill-pass  { background: #c6f6d5; color: #276749; }
+        .pill-warn  { background: #fefcbf; color: #7b6800; }
+        .pill-fail  { background: #fed7d7; color: #9b2c2c; }
+        .result-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .result-card.pass  { border-color: #68d391; }
+        .result-card.warn  { border-color: #f6e05e; }
+        .result-card.fail  { border-color: #fc8181; }
+        .result-card.checking { border-color: #bee3f8; }
+        .result-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 13px 16px;
+        }
+        .result-icon { font-size: 19px; flex-shrink: 0; margin-top: 1px; }
+        .result-meta { flex: 1; min-width: 0; }
+        .result-label {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            font-size: 11px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .result-context {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            color: #1a202c;
+            margin-bottom: 3px;
+            line-height: 1.3;
+        }
+        .result-url {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #718096;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .result-status {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            flex-shrink: 0;
+            text-align: right;
+            max-width: 160px;
+        }
+        .result-card.pass  .result-status { color: #276749; }
+        .result-card.warn  .result-status { color: #7b6800; }
+        .result-card.fail  .result-status { color: #9b2c2c; }
+        .result-card.checking .result-status { color: #2b6cb0; }
+        .event-checks {
+            background: #f7fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 10px 16px 10px 46px;
+        }
+        .check-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .check-row:last-child { border-bottom: none; }
+        .check-icon  { flex-shrink: 0; font-size: 13px; }
+        .check-field { font-family: 'Raleway', sans-serif; font-weight: 700; color: #4a5568; min-width: 72px; flex-shrink: 0; }
+        .check-detail { flex: 1; }
+        .check-listed { font-family: 'Courier New', monospace; font-size: 11px; color: #4a5568; }
+        .check-actual { font-family: 'Courier New', monospace; font-size: 11px; margin-top: 1px; }
+        .check-actual.ok      { color: #276749; }
+        .check-actual.mismatch{ color: #9b2c2c; font-weight: 700; }
+        .check-actual.info    { color: #2b6cb0; }
+        .section-heading {
+            font-family: 'Raleway', sans-serif;
+            font-weight: 800;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #718096;
+            margin: 18px 0 8px;
+        }
+        .progress-bar-wrap {
+            background: #edf2f7;
+            border-radius: 4px;
+            height: 5px;
+            margin: 14px 0;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-bar-wrap.visible { display: block; }
+        .progress-bar {
+            height: 100%;
+            background: #FFA703;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
     </style>
 </head>
 <body>
@@ -257,6 +433,39 @@
             <div id="postcardError" class="error" style="display:none;"></div>
         </div>
     </div>
+
+
+    <!-- ── TOOL 3: Proof Link Checker ── -->
+    <div class="container">
+        <div class="card-header" onclick="toggleCard('linkChecker')">
+            <h2 class="tool-title">🔍 Proof Link Checker</h2>
+            <span class="card-chevron">▼</span>
+        </div>
+        <div class="card-body" id="linkCheckerBody">
+            <div class="info">
+                Paste the proof newsletter URL <strong>or</strong> paste raw HTML. Every RSVP link is verified against the actual Mobilize event — title, day of week, date, time &amp; timezone. All other links are checked for reachability.
+            </div>
+            <label class="input-label">Newsletter proof URL (Constant Contact, etc.)</label>
+            <input type="text" class="url-input" id="proofUrl"
+                placeholder="https://campaignlp.constantcontact.com/em/..." />
+            <div class="or-divider">OR</div>
+            <label class="input-label">Paste raw HTML from the proof email</label>
+            <textarea class="html-input" id="rawHtml"
+                placeholder='&lt;a href="https://www.mobilize.us/fieldteam6/event/12345/"&gt;RSVP HERE&lt;/a&gt; ...'></textarea>
+            <button class="generate-btn" id="checkBtn" onclick="runLinkCheck()">
+                🔍 Check All Links
+            </button>
+            <div class="progress-bar-wrap" id="progressWrap">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="checkError" class="error" style="display:none;"></div>
+            <div id="resultsSection" class="results-section">
+                <div class="results-summary" id="resultsSummary"></div>
+                <div id="resultsList"></div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // ════════════════════════════════════════
@@ -449,6 +658,267 @@
                 });
             }
         }
+
+        // ════════════════════════════════════════
+        // TOOL 3 – Proof Link Checker
+        // ════════════════════════════════════════
+        const MOB_API = 'https://api.mobilize.us/v1';
+
+        function lcExtractMobilizeId(url) {
+            const m = url.match(/\/event\/(\d+)/i) || url.match(/\/events\/(\d+)/i);
+            return m ? m[1] : null;
+        }
+
+        async function lcFetchEvent(id) {
+            const r = await fetch(`${MOB_API}/events/${id}`);
+            if (!r.ok) throw new Error('Mobilize API ' + r.status);
+            return (await r.json()).data;
+        }
+
+        function lcFormatDT(unixTs, tz) {
+            tz = tz || 'America/New_York';
+            const parts = new Intl.DateTimeFormat('en-US', {
+                timeZone: tz, weekday: 'long', month: 'numeric', day: 'numeric',
+                hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short'
+            }).formatToParts(new Date(unixTs * 1000));
+            const g = t => parts.find(p => p.type === t)?.value ?? '';
+            const h = parseInt(g('hour'),10), min = parseInt(g('minute'),10);
+            const ampm = g('dayPeriod').toLowerCase().startsWith('p') ? 'PM' : 'AM';
+            const t = min===0 ? h+' '+ampm : h+':'+(min+'').padStart(2,'0')+' '+ampm;
+            return { weekday:g('weekday'), month:g('month'), day:g('day'), time:t, tz:g('timeZoneName'), full:g('weekday')+', '+g('month')+'/'+g('day')+' at '+t+' '+g('timeZoneName') };
+        }
+
+        function lcParseListedEvent(ctx) {
+            if (!ctx) return null;
+            const m = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(\d+)\/(\d+)(?:\s*\([^)]*\))?\s*at\s*([\d:]+)([ap])/i);
+            if (!m) return null;
+            return { state:m[1], city:m[2].toUpperCase(), weekday:m[3], month:m[4], day:m[5], timeRaw:m[6]+m[7].toLowerCase() };
+        }
+
+        function lcNormTime(raw) {
+            if (!raw) return '';
+            const m = raw.match(/^(\d+)(?::(\d+))?([ap])$/i);
+            if (!m) return raw;
+            const ampm = m[3].toLowerCase()==='p'?'PM':'AM';
+            const min = m[2] ? parseInt(m[2],10) : 0;
+            return min===0 ? parseInt(m[1],10)+' '+ampm : parseInt(m[1],10)+':'+(min+'').padStart(2,'0')+' '+ampm;
+        }
+
+        function lcClassify(href) {
+            if (/mobilize\.us/i.test(href) && /\/event\//i.test(href)) return 'mobilize-event';
+            if (/mobilize\.us/i.test(href)) return 'mobilize-other';
+            if (/fieldteam6\.org/i.test(href)) return 'ft6';
+            if (/actblue\.com/i.test(href)) return 'actblue';
+            if (/zoom\.us|zoomgov\.com/i.test(href)) return 'zoom';
+            return 'general';
+        }
+
+        function lcLabelFor(type) {
+            return type==='mobilize-event'?'📅 Voter Drive Event':type==='actblue'?'💙 ActBlue Donation':type==='ft6'?'🏠 FieldTeam6.org':type==='zoom'?'💻 Zoom Event':'🔗 Link';
+        }
+
+        function lcExtractLinks(html) {
+            const doc = new DOMParser().parseFromString(html, 'text/html');
+            const out=[], seen=new Set();
+            doc.querySelectorAll('a[href]').forEach(a => {
+                let href = a.getAttribute('href');
+                if (!href || href.startsWith('mailto:') || href.startsWith('#')) return;
+                const cc = href.match(/[?&]url=([^&]+)/);
+                if (cc) { try { href = decodeURIComponent(cc[1]); } catch(e){} }
+                if (seen.has(href)) return;
+                seen.add(href);
+                const linkText = a.textContent.trim();
+                let ctx='', el=a.parentElement;
+                for (let i=0;i<4&&el;i++) {
+                    const t=el.textContent.trim().replace(/\s+/g,' ');
+                    if (t.length>20&&t.length<500){ctx=t;break;}
+                    el=el.parentElement;
+                }
+                out.push({href, linkText, contextText:ctx});
+            });
+            return out;
+        }
+
+        function escH(s){ return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''; }
+
+        async function lcCheckLink(li) {
+            const {href, linkText, contextText} = li;
+            const type = lcClassify(href);
+            const result = {href, linkText, contextText, type, status:'checking', icon:'⏳', label:lcLabelFor(type), message:'', checks:[]};
+
+            if (type==='mobilize-event') {
+                const id = lcExtractMobilizeId(href);
+                if (!id) { result.status='warn'; result.icon='⚠️'; result.message='Could not extract event ID'; return result; }
+                let ev;
+                try { ev = await lcFetchEvent(id); } catch(e) { result.status='fail'; result.icon='❌'; result.message='Mobilize API error: '+e.message; return result; }
+                if (!ev) { result.status='fail'; result.icon='❌'; result.message='Event not found (deleted?)'; return result; }
+                result.eventTitle = ev.title;
+                const now = Math.floor(Date.now()/1000);
+                const slot = (ev.timeslots||[]).filter(ts=>ts.start_date>now).sort((a,b)=>a.start_date-b.start_date)[0];
+                result.checks.push({field:'Event', icon:'✅', listed:'ID #'+id, actual:ev.title, ok:true});
+                let allOk=true;
+                if (!slot) {
+                    result.checks.push({field:'Timeslot', icon:'⚠️', listed:'Upcoming date', actual:'No future timeslots — past or sold out?', ok:false});
+                    allOk=false;
+                } else {
+                    const tz = ev.timezone||'America/New_York';
+                    const dt = lcFormatDT(slot.start_date, tz);
+                    const listed = lcParseListedEvent(contextText);
+                    if (listed) {
+                        const wOk = dt.weekday.toLowerCase()===listed.weekday.toLowerCase();
+                        result.checks.push({field:'Day', icon:wOk?'✅':'❌', listed:listed.weekday, actual:dt.weekday, ok:wOk});
+                        if(!wOk) allOk=false;
+                        const dOk = dt.month===listed.month && dt.day===listed.day;
+                        result.checks.push({field:'Date', icon:dOk?'✅':'❌', listed:listed.month+'/'+listed.day, actual:dt.month+'/'+dt.day, ok:dOk});
+                        if(!dOk) allOk=false;
+                        const normT = lcNormTime(listed.timeRaw);
+                        const tOk = normT===dt.time;
+                        result.checks.push({field:'Time', icon:tOk?'✅':'❌', listed:normT, actual:dt.time+' '+dt.tz, ok:tOk});
+                        if(!tOk) allOk=false;
+                        const loc = ev.location;
+                        if (loc&&loc.locality&&loc.region) {
+                            const lOk = loc.locality.toUpperCase()===listed.city && loc.region.toUpperCase()===listed.state.toUpperCase();
+                            result.checks.push({field:'Location', icon:lOk?'✅':'❌', listed:listed.state+' ('+listed.city+')', actual:loc.region+' ('+loc.locality.toUpperCase()+')', ok:lOk});
+                            if(!lOk) allOk=false;
+                        }
+                    } else {
+                        result.checks.push({field:'DateTime', icon:'ℹ️', listed:'(no newsletter text found to compare)', actual:dt.full, ok:null});
+                        const loc=ev.location;
+                        result.checks.push({field:'Location', icon:'ℹ️', listed:'', actual:loc?(loc.region+' ('+loc.locality.toUpperCase()+')') :'Unknown', ok:null});
+                    }
+                }
+                result.status=allOk?'pass':'fail';
+                result.icon=allOk?'✅':'❌';
+                result.message=allOk?'All details verified':'⚠ Mismatch — see details';
+                return result;
+            }
+
+            // General link check
+            try {
+                await fetch(href, {method:'GET', mode:'no-cors', signal:AbortSignal.timeout(8000)});
+                result.status='pass'; result.icon='✅'; result.message='Reachable';
+            } catch(e) {
+                if (e.name==='AbortError'||e.name==='TimeoutError') {
+                    result.status='warn'; result.icon='⚠️'; result.message='Timed out (check manually)';
+                } else {
+                    result.status='fail'; result.icon='❌'; result.message='Unreachable: '+e.message;
+                }
+            }
+            return result;
+        }
+
+        function lcRenderCard(r) {
+            const checks = r.checks.length ? `<div class="event-checks">${r.checks.map(c=>`
+                <div class="check-row">
+                    <span class="check-icon">${c.icon}</span>
+                    <span class="check-field">${escH(c.field)}</span>
+                    <div class="check-detail">
+                        ${c.listed?`<div class="check-listed">Listed: ${escH(c.listed)}</div>`:''}
+                        <div class="check-actual ${c.ok===true?'ok':c.ok===false?'mismatch':'info'}">${c.ok===false?'⚠ Actual: ':c.ok===true?'Actual: ':''}${escH(c.actual)}</div>
+                    </div>
+                </div>`).join('')}</div>` : '';
+            const title = r.eventTitle ? escH(r.eventTitle) : (r.linkText ? escH(r.linkText) : '');
+            const shortUrl = r.href.length>72 ? r.href.substring(0,69)+'...' : r.href;
+            return `<div class="result-card ${r.status}">
+                <div class="result-header">
+                    <span class="result-icon">${r.icon}</span>
+                    <div class="result-meta">
+                        <div class="result-label">${r.label}</div>
+                        ${title?`<div class="result-context">${title}</div>`:''}
+                        <div class="result-url">${escH(shortUrl)}</div>
+                    </div>
+                    <div class="result-status">${escH(r.message)}</div>
+                </div>${checks}</div>`;
+        }
+
+        async function runLinkCheck() {
+            const btn=document.getElementById('checkBtn');
+            const errDiv=document.getElementById('checkError');
+            const resDiv=document.getElementById('resultsSection');
+            const sumDiv=document.getElementById('resultsSummary');
+            const listDiv=document.getElementById('resultsList');
+            const pWrap=document.getElementById('progressWrap');
+            const pBar=document.getElementById('progressBar');
+
+            errDiv.style.display='none'; resDiv.classList.remove('visible');
+            listDiv.innerHTML=''; sumDiv.innerHTML='';
+            btn.disabled=true; btn.innerHTML='🔍 Checking<span class="loading"></span>';
+            pWrap.classList.add('visible'); pBar.style.width='0%';
+
+            let html='';
+            try {
+                const url=document.getElementById('proofUrl').value.trim();
+                const raw=document.getElementById('rawHtml').value.trim();
+                if (!url&&!raw) throw new Error('Please enter a URL or paste HTML.');
+
+                if (url) {
+                    let res;
+                    try {
+                        res = await fetch(url,{signal:AbortSignal.timeout(10000)});
+                        if (!res.ok) throw new Error('not ok');
+                        html = await res.text();
+                    } catch(e) {
+                        const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        res = await fetch(proxy,{signal:AbortSignal.timeout(15000)});
+                        if (!res.ok) throw new Error('Proxy fetch failed: '+res.status);
+                        html = (await res.json()).contents;
+                    }
+                } else { html=raw; }
+
+                const links = lcExtractLinks(html);
+                if (!links.length) throw new Error('No links found. Make sure the HTML has <a href="..."> tags.');
+                pBar.style.width='5%';
+
+                const evLinks  = links.filter(l=>lcClassify(l.href)==='mobilize-event');
+                const genLinks = links.filter(l=>lcClassify(l.href)!=='mobilize-event');
+                const ordered  = [...evLinks,...genLinks];
+
+                if (evLinks.length>0) {
+                    const h=document.createElement('div');
+                    h.className='section-heading';
+                    h.textContent='🗓️ Voter Drive RSVP Links ('+evLinks.length+')';
+                    listDiv.appendChild(h);
+                }
+                ordered.forEach((l,i) => {
+                    if (i===evLinks.length && genLinks.length>0) {
+                        const h=document.createElement('div');
+                        h.className='section-heading';
+                        h.textContent='🔗 Other Links ('+genLinks.length+')';
+                        listDiv.appendChild(h);
+                    }
+                    const d=document.createElement('div');
+                    d.id='lc-'+i;
+                    d.innerHTML=`<div class="result-card checking"><div class="result-header"><span class="result-icon">⏳</span><div class="result-meta"><div class="result-label">${lcLabelFor(lcClassify(l.href))}</div><div class="result-url">${escH(l.href.substring(0,72))}</div></div><div class="result-status" style="color:#2b6cb0">Checking…</div></div></div>`;
+                    listDiv.appendChild(d);
+                });
+
+                resDiv.classList.add('visible');
+                let done=0;
+                await Promise.all(ordered.map(async (link,i) => {
+                    const r = await lcCheckLink(link);
+                    const el = document.getElementById('lc-'+i);
+                    if (el) el.innerHTML = lcRenderCard(r);
+                    done++;
+                    pBar.style.width = 5+Math.round(done/ordered.length*90)+'%';
+                    // update summary
+                    const cards=document.querySelectorAll('#resultsList .result-card');
+                    let p=0,w=0,f=0;
+                    cards.forEach(c=>{if(c.classList.contains('pass'))p++;else if(c.classList.contains('warn'))w++;else if(c.classList.contains('fail'))f++;});
+                    sumDiv.innerHTML=`<span class="summary-pill pill-total">🔗 ${ordered.length} links${done<ordered.length?' · '+done+' checked':''}</span>${p?`<span class="summary-pill pill-pass">✅ ${p} OK</span>`:''}${w?`<span class="summary-pill pill-warn">⚠️ ${w} warnings</span>`:''}${f?`<span class="summary-pill pill-fail">❌ ${f} failed</span>`:''}
+                    `;
+                }));
+                pBar.style.width='100%';
+
+            } catch(e) {
+                errDiv.textContent='Error: '+e.message;
+                errDiv.style.display='block';
+            } finally {
+                btn.disabled=false;
+                btn.innerHTML='🔍 Check All Links';
+                setTimeout(()=>{ pWrap.classList.remove('visible'); },1200);
+            }
+        }
+
     </script>
 </body>
 </html>
