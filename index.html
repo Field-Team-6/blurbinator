@@ -1457,9 +1457,18 @@ FONT ISSUES DETECTED BY PARSER (report these if present): ${styleAudit.length > 
 NEWSLETTER TEXT TO PROOFREAD:
 ${plainText.substring(0, 6000)}
 
-Respond ONLY with a JSON array of issues. Each issue: {"severity":"error"|"warning"|"info","category":"TYPO"|"CAPITALIZATION"|"PROFANITY"|"DOUBLE SPACE"|"HYPHENATION"|"NAME"|"HOTLINK"|"FONT","description":"what is wrong","quote":"the exact offending text (max 80 chars)","fix":"suggested correction"}
-If NO issues found, return an empty array: []
-Return ONLY the JSON array, no other text.`;
+Respond ONLY with a JSON array of issues. Each issue object must have:
+- "severity": "error"|"warning"|"info"
+- "category": "TYPO"|"CAPITALIZATION"|"PROFANITY"|"DOUBLE SPACE"|"HYPHENATION"|"NAME"|"HOTLINK"|"FONT"
+- "description": what is wrong
+- "quote": the exact offending text as it appears in the newsletter (max 80 chars)
+- "fix": the corrected version of just the offending text
+- "copyText": what the user should paste into Constant Contact. Rules:
+  * DOUBLE SPACE: the full corrected surrounding sentence (extra space removed) for find-and-replace — include enough context to be unique
+  * HOTLINK: the full corrected sentence as plain text with punctuation moved outside the link
+  * TYPO/CAPITALIZATION/NAME/HYPHENATION: just the corrected word or short phrase
+  * PROFANITY/FONT: set to null
+If NO issues found return []. Return ONLY the JSON array, no other text.`;
 
                 const aiRes = await fetch('/.netlify/functions/ai-check', {
                     method: 'POST',
@@ -1509,6 +1518,14 @@ Return ONLY the JSON array, no other text.`;
                             html += '<div class="proof-issue-desc">' + escH(issue.description||'') + '</div>';
                             if (issue.quote) html += '<div class="proof-issue-quote">' + escH(issue.quote) + '</div>';
                             if (issue.fix) html += '<div class="proof-issue-fix">→ ' + escH(issue.fix) + '</div>';
+                            if (issue.copyText) {
+                                const showPreview = issue.category === 'DOUBLE SPACE' || issue.category === 'HOTLINK';
+                                const copyLabel = showPreview ? '📋 Copy corrected sentence' : '📋 Copy fix';
+                                if (showPreview) {
+                                    html += '<div style="margin-top:6px;font-family:Courier New,monospace;font-size:11px;color:#4a5568;background:#e2e8f0;padding:4px 8px;border-radius:4px;line-height:1.5;">' + escH(issue.copyText) + '</div>';
+                                }
+                                html += '<div style="margin-top:6px;"><button onclick="prCopyFix(this)" data-copy="' + escH(issue.copyText) + '" style="background:#3D9BE9;color:white;border:none;padding:5px 12px;border-radius:6px;font-family:Raleway,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">' + copyLabel + '</button></div>';
+                            }
                             html += '</div>';
                         });
                     });
@@ -1529,6 +1546,29 @@ Return ONLY the JSON array, no other text.`;
             // Add ignored issue keys here — format: "CATEGORY::quote or description"
             // Example: 'DOUBLE SPACE::WORLDS SAVED: 1'
         ];
+
+        function prCopyFix(btnEl) {
+            const text = btnEl.getAttribute('data-copy') || '';
+            const original = btnEl.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                btnEl.textContent = '✅ Copied!';
+                btnEl.style.background = '#38a169';
+                setTimeout(() => {
+                    btnEl.textContent = original;
+                    btnEl.style.background = '#3D9BE9';
+                }, 2500);
+            }).catch(() => {
+                // Fallback for older browsers
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                btnEl.textContent = '✅ Copied!';
+                setTimeout(() => { btnEl.textContent = original; }, 2500);
+            });
+        }
 
         async function prIgnoreIssue(btnEl) {
             const key = btnEl.getAttribute('data-key');
