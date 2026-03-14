@@ -27,7 +27,7 @@ exports.handler = async function(event, context) {
             return { statusCode: 200, headers, body: JSON.stringify({ ok: true, message: 'Already ignored' }) };
         }
         // Insert before the closing bracket of BLURBINATOR_HARDCODED_IGNORED
-        const MARKER = '        ];\n\n        async function prIgnoreIssue';
+        const MARKER = '        ];\n\n        function prCopyFix';
         const newEntry = "            '" + key.replace(/'/g, "\\'") + "',\n";
         if (!currentContent.includes(MARKER)) return { statusCode: 500, headers, body: JSON.stringify({ error: 'Marker not found in index.html' }) };
         const newContent = currentContent.replace(MARKER, newEntry + MARKER);
