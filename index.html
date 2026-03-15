@@ -1061,7 +1061,7 @@ Answer in this exact JSON format (no other text):
                 const aiData = await aiRes.json();
                 const raw = aiData.text || (aiData.content&&aiData.content[0]&&aiData.content[0].text) || '';
                 let verdict;
-                try { verdict = JSON.parse(raw.replace(/```json|```/g,'')); } catch(e){ verdict=null; }
+                try { verdict = JSON.parse(raw.replace(/\x60\x60\x60json|\x60\x60\x60/g,'')); } catch(e){ verdict=null; }
 
                 if (!verdict) {
                     result.status='warn'; result.icon='⚠️'; result.message='AI check inconclusive — check manually';
@@ -1403,24 +1403,25 @@ Answer in this exact JSON format (no other text):
                 // Extract link audit: only flag links where punct is genuinely INSIDE the <a> tag
                 const linkAudit = [];
                 const rawDoc = new DOMParser().parseFromString(proofData.html, 'text/html');
+                                // Parse rendered HTML to cross-check links vs actual display
+                const rBody = new DOMParser().parseFromString(proofData.html, 'text/html').body;
+                const rText = rBody ? (rBody.innerText || rBody.textContent || '') : '';
+
                 rawDoc.querySelectorAll('a[href]').forEach(a => {
                     const text = a.textContent.trim();
                     const href = a.getAttribute('href') || '';
                     if (href.startsWith('mailto:') || href.startsWith('#') || !text) return;
                     const lastChar = text.slice(-1);
-                    const punctInsideLink = /[.,;:!?]/.test(lastChar);
-                    if (punctInsideLink) {
-                        const next = a.nextSibling;
-                        const afterText = (next && next.nodeType === 3) ? next.textContent.trimStart() : '';
-                        // CC quirk: if the same punct immediately follows </a> it renders fine — not a real error
-                        if (afterText.charAt(0) === lastChar) return;
-                        linkAudit.push({
-                            linkText: text.substring(0, 80),
-                            lastCharInLink: lastChar,
-                            charAfterLink: afterText.substring(0,5),
-                            verdict: 'PUNCT_INSIDE_LINK'
-                        });
+                    if (!/[.,;:!?]/.test(lastChar)) return;
+                    const next = a.nextSibling;
+                    const afterText = (next && next.nodeType === 3) ? next.textContent.trimStart() : '';
+                    if (afterText.charAt(0) === lastChar) return;
+                    const linkNoPunct = text.slice(0, -1).trim();
+                    if (linkNoPunct.length > 2 && rText) {
+                        const ri = rText.indexOf(linkNoPunct);
+                        if (ri !== -1 && rText.charAt(ri + linkNoPunct.length) !== lastChar) return;
                     }
+                    linkAudit.push({linkText: text.substring(0,80), lastCharInLink: lastChar, charAfterLink: afterText.substring(0,5), verdict: 'PUNCT_INSIDE_LINK'});
                 });
 
                 // Extract font/style audit: ONLY flag <p> body text with wrong inline styles
@@ -1482,7 +1483,7 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                     signal: AbortSignal.timeout(45000)
                 });
                 const aiData = await aiRes.json();
-                const raw = (aiData.text || '').replace(/```json|```/g,'').trim();
+                const raw = (aiData.text || '').replace(/\x60\x60\x60json|\x60\x60\x60/g,'').trim();
 
                 let issues = [];
                 try { issues = JSON.parse(raw); } catch(e) { throw new Error('AI returned unparseable response. Try again.'); }
@@ -1528,7 +1529,7 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                                 const isHotlink = issue.category === 'HOTLINK';
                                 const copyLabel = showPreview ? '📋 Copy corrected sentence' : '📋 Copy fix';
                                 if (showPreview) {
-                                    html += '<div style="margin-top:6px;font-family:Courier New,monospace;font-size:11px;color:#4a5568;background:#e2e8f0;padding:4px 8px;border-radius:4px;line-height:1.5;">' + escH(issue.copyText) + '</div>';
+                                    html += '<div style="margin-top:6px;font-family:Arial,sans-serif;font-size:16px;color:#1f3864;background:#edf2ff;padding:6px 10px;border-radius:4px;line-height:1.5;">' + escH(issue.copyText) + '</div>';
                                 }
                                 const dataHtml = issue.copyHtml ? ' data-html="' + escH(issue.copyHtml) + '"' : '';
                                 html += '<div style="margin-top:6px;"><button onclick="prCopyFix(this)" data-copy="' + escH(issue.copyText) + '"' + dataHtml + ' style="background:#3D9BE9;color:white;border:none;padding:5px 12px;border-radius:6px;font-family:Raleway,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">' + copyLabel + (isHotlink && issue.copyHtml ? ' (with link)' : '') + '</button></div>';
