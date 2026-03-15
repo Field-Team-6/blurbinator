@@ -1551,11 +1551,8 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
 
         // ── Hardcoded ignored proofreading issues (shared by all users) ──
         window.BLURBINATOR_HARDCODED_IGNORED = [
-            // Add ignored issue keys here — format: "CATEGORY::quote or description"
-            // Example: 'DOUBLE SPACE::WORLDS SAVED: 1'
-            'DOUBLE SPACE::NC needs you!                  Please be sure your browser',
-            'DOUBLE SPACE::TOTAL VOTER TOUCHES TO DATE: 97 million
-              REGISTER                  DONATE                  LET\'S PUT ON A SHOW!',
+            // Ignored proofreading issues — added via the "x Ignore forever" button
+            // Format: 'CATEGORY::quote or description'
         ];
 
         function prCopyFix(btnEl) {
