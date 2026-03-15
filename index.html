@@ -1396,9 +1396,17 @@ Answer in this exact JSON format (no other text):
                 // Parse HTML — extract readable text AND a link-audit version
                 const doc = new DOMParser().parseFromString(proofData.html, 'text/html');
 
-                // Extract plain text for general proofreading
+                // Remove non-content elements
                 doc.querySelectorAll('script,style,img').forEach(el=>el.remove());
-                const plainText = (doc.body||doc.documentElement).innerText || doc.body.textContent || '';
+
+                // Extract text only from paragraph-level elements (20+ chars).
+                // Joining with newlines prevents adjacent elements from mashing text
+                // together, which caused phantom double-spaces and truncated sentences.
+                const bodyEls = Array.from(doc.querySelectorAll('p, li, td'));
+                const plainText = bodyEls
+                    .map(el => (el.innerText || el.textContent || '').trim())
+                    .filter(t => t.length >= 20)
+                    .join('\n');
 
                 // Extract link audit: only flag links where punct is genuinely INSIDE the <a> tag
                 const linkAudit = [];
@@ -1445,7 +1453,7 @@ Answer in this exact JSON format (no other text):
                 const prompt = `You are a meticulous proofreader for Field Team 6, a voter registration nonprofit. Review the newsletter text below and identify ALL issues in these specific categories. Be thorough but only flag real problems.
 
 RULES TO CHECK:
-1. TYPOS & GRAMMAR: spelling errors, wrong words, grammatical mistakes
+1. TYPOS & GRAMMAR: spelling errors, wrong words, clear grammatical mistakes. Do NOT flag voter drive bullet lines (e.g. "GA (SAVANNAH) - Saturday, 3/14 at 9:30a") as incomplete — these are correctly formatted abbreviated event listings, not sentences. Only flag genuine misspellings or wrong words.
 2. PARTY CAPITALIZATION: "democrat" or "democratic" (lowercase) when referring to the Democratic Party or its members must be "Democrat" or "Democratic" (capitalized). Note: "democratic" as a general adjective ("democratic values") is fine lowercase.
 3. PROFANITY: flag any profanity or potentially offensive language (informational — may be intentional)
 4. DOUBLE SPACES: two or more spaces between sentences or words
@@ -1554,7 +1562,6 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
             // Ignored proofreading issues — added via the "x Ignore forever" button
             // Format: 'CATEGORY::quote or description'
                 'DOUBLE SPACE::LET\'S PUT ON A SHOW!',
-                'DOUBLE SPACE::NC needs you!                  Please be sure your browser or email client is set to display images.',
         ];
 
         function prCopyFix(btnEl) {
