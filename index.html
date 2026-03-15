@@ -1399,13 +1399,27 @@ Answer in this exact JSON format (no other text):
                 // Remove non-content elements
                 doc.querySelectorAll('script,style,img').forEach(el=>el.remove());
 
-                // Extract text only from paragraph-level elements (20+ chars).
-                // Joining with newlines prevents adjacent elements from mashing text
-                // together, which caused phantom double-spaces and truncated sentences.
-                const bodyEls = Array.from(doc.querySelectorAll('p, li, td'));
-                const plainText = bodyEls
-                    .map(el => (el.innerText || el.textContent || '').trim())
-                    .filter(t => t.length >= 20)
+                // Extract text from content elements — headings, paragraphs, list items, table cells.
+                // Use leaf-only elements to avoid duplicating text from nested structures.
+                // Join with newlines so adjacent elements don't mash text together.
+                const contentEls = Array.from(doc.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,td'));
+                const seen = new Set();
+                const plainText = contentEls
+                    .filter(el => {
+                        // Skip if any ancestor is also a content element (avoid duplication)
+                        let p = el.parentElement;
+                        while (p) {
+                            if (['H1','H2','H3','H4','H5','H6','P','LI','TD'].includes(p.tagName)) return false;
+                            p = p.parentElement;
+                        }
+                        return true;
+                    })
+                    .map(el => (el.innerText || el.textContent || '').trim().replace(/\s+/g, ' '))
+                    .filter(t => {
+                        if (t.length < 5 || seen.has(t)) return false;
+                        seen.add(t);
+                        return true;
+                    })
                     .join('\n');
 
                 // Extract link audit: only flag links where punct is genuinely INSIDE the <a> tag
