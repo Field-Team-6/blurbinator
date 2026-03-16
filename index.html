@@ -664,6 +664,28 @@
         </div>
     </div>
 
+    <!-- ==== TOOL 5: BLURBINATE ==== -->
+    <div class="container">
+        <div class="card-header" onclick="toggleCard('blurbinate')">
+            <h2 class="tool-title">🗞️ Blurbinate</h2>
+            <span class="card-chevron">▼</span>
+        </div>
+        <div class="card-body" id="blurbinateBody">
+            <div class="info">
+                Reads the most recent newsletter, lists its blurb headings, then recommends blurbs and opening theme options for next week — informed by past themes, current news, and the FT6 mission.
+            </div>
+            <label class="input-label">Most recent newsletter proof URL (auto-fills from Proof Link Checker)</label>
+            <input type="text" class="url-input" id="blurbinateUrl"
+                placeholder="https://campaignlp.constantcontact.com/em/..."
+                onkeydown="if(event.key==='Enter') runBlurbinate()" />
+            <button class="generate-btn" onclick="runBlurbinate()" id="blurbinateBtn">
+                🗞️ Blurbinate!
+            </button>
+            <div id="blurbinateResults"></div>
+        </div>
+    </div>
+
+
     <script>
         // ========================================
         // Collapse / expand cards
@@ -1734,6 +1756,114 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                 btnEl.disabled = false;
             }
         }
+
+        // ==== TOOL 5: BLURBINATE ====
+
+        // Auto-fill blurbinate URL from proof checker
+        document.getElementById('proofUrl')?.addEventListener('input', function() {
+            const blurbUrl = document.getElementById('blurbinateUrl');
+            if (blurbUrl && !blurbUrl.value) blurbUrl.value = this.value;
+        });
+
+        async function runBlurbinate() {
+            const url = document.getElementById('blurbinateUrl').value.trim();
+            const btn = document.getElementById('blurbinateBtn');
+            const results = document.getElementById('blurbinateResults');
+            if (!url) { alert('Please enter the newsletter proof URL.'); return; }
+
+            btn.disabled = true;
+            btn.textContent = 'Fetching newsletter...';
+            results.innerHTML = '<p style="color:#666;font-style:italic">Fetching newsletter and searching current news...</p>';
+
+            try {
+                // Step 1: Fetch newsletter HTML via fetch-proof
+                const proofResp = await fetch('/.netlify/functions/fetch-proof', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const proofData = await proofResp.json();
+                if (!proofData.html) throw new Error('Could not fetch newsletter.');
+
+                // Step 2: Extract blurb headings from the HTML
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(proofData.html, 'text/html');
+                const headings = [];
+                doc.querySelectorAll('td, div, p, h1, h2, h3, h4').forEach(el => {
+                    const t = el.innerText?.trim();
+                    if (!t || t.length < 4 || t.length > 120) return;
+                    const isAllCaps = t === t.toUpperCase() && /[A-Z]{3,}/.test(t);
+                    const isTitleCase = /^[A-Z][^.!?]*[A-Z]/.test(t) && t.split(' ').length <= 12;
+                    if ((isAllCaps || isTitleCase) && !headings.includes(t)) {
+                        headings.push(t);
+                    }
+                });
+                // Deduplicate and limit
+                const cleanHeadings = [...new Set(headings)].slice(0, 30);
+
+                // Step 3: Get newsletter history from project file context
+                const historyContext = `PAST OPENING THEMES (newest to oldest, do not repeat recently used themes or categories):
+LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT PEOPLE (Feb 2026), EMERGENCY PROTOCOLS (Jan 2026), THERE IS NOW A PATH TO THE SENATE (Jan 2026), LOVE AND A PLAN (Jan 2026), TWO HOT DOGS EXTRA ONIONS AND MUSTARD (Dec 2025), REDISCOVER LOVE (Dec 2025), TECTONIC (Dec 2025), GIVING THANKS (Nov 2025), ORGANIZING TURNS THE IMPOSSIBLE INTO REALITY (Nov 2025), HONOR YOUR RIGHTEOUS WRATH (Nov 2025), SING IT (Nov 2025), THROUGH THE RIBBON (Oct 2025), ANYTHING IS POSSIBLE (Oct 2025), REMEMBER YOU EXIST (Oct 2025), STAY LOUD STAY UNITED STAY BRAVE (Sep 2025), MAKE HISTORY WITH US (Sep 2025), NONVIOLENCE IS THE WAY FORWARD (Sep 2025), WE WON'T BACK DOWN (Sep 2025), UPSET VICTORY FOR THE RESISTANCE (Aug 2025), LAUNCHING BIGGEST IN-PERSON VOTER DRIVE CAMPAIGN SINCE CIVIL RIGHTS (Aug 2025), FROM THE SWAMP TO THE HARBOR (Aug 2025), DEMOCRATS SHOW A SPINE (Aug 2025), 10000 HOURS AND THE MATH OF MOVEMENTS (Jul 2025), DOOM-SKIPPING AND HOPE-SCROLLING (Jul 2025), DO IT FOR JOHN LEWIS (Jul 2025), BIG BEAUTIFUL BLUE WAVE COMING (Jul 2025), HOLLYWOOD NEEDS HEROES (Jun 2025), BIGGEST PROTEST IN HISTORY 5 MONTHS IN (Jun 2025), A WILDFIRE OF INSPIRATION (Jun 2025), LISTEN TO THE BOSS (Jun 2025), MISSION IMPOSSIBLE (May 2025), STICK TO THE ANTI-AUTOCRACY PLAYBOOK (May 2025), NEW PROBLEMS NEED NEW SOLUTIONS (May 2025), NOBODY KNOWS THIS (Apr 2025), NO GREATER POWER THAN THE PEOPLE (Apr 2025), PLEASE GROW A SPINE DOT ORG (Apr 2025), LANDSLIDE VICTORY FOR DEMOCRACY (Apr 2025), BREAKING UNBROKEN WINNING STREAK (Mar 2025), FIST IN THE AIR (Mar 2025), NO BLANK CHECK FOR TRUMP/MUSK (Mar 2025), HOW WE SURVIVE (Mar 2025), 3 BIG IDEAS (Feb 2025), CONTEST EVERY RACE (Feb 2025), TAKING IT TO THE STREETS (Feb 2025), DAMN THE TORPEDOES (Feb 2025), STOP THE MAGA VOTER SUPPRESSION BILL (Jan 2025), WE ARE BACK (Jan 2025), DAY ONE (Jan 2025), LETTER OF HOPE FROM HELL (Jan 2025)`;
+
+                // Step 4: Call AI with newsletter text + history + news search request
+                btn.textContent = 'Asking Claude...';
+                const aiPrompt = `You are helping write the Field Team 6 weekly newsletter. Field Team 6 does partisan in-person voter registration — their mission is "Register Democrats. Save the world."
+
+NEWSLETTER BLURB HEADINGS FROM LAST WEEK:
+${cleanHeadings.map(h => '- ' + h).join('\n')}
+
+${historyContext}
+
+VOICE & STYLE RULES:
+- Opening themes are ALL CAPS, punchy, 2-6 words ideal
+- Mix urgency + humor + humanity — never pure doom
+- Pop culture refs, historical echoes, sports/race metaphors all fair game
+- Self-deprecating humor welcome
+- Always ties back to partisan voter registration and why it matters right now
+- Categories to rotate: current news hook, self-care/activism-as-therapy, historical inspiration, pop culture riff, direct urgency, FT6 milestone/pride, philosophical/motivational, humor-first
+- Do NOT repeat a theme category used in the last 2 newsletters
+- The last newsletter was "LET'S PUT ON A SHOW" (entertainment/pivot metaphor) — avoid similar metaphors
+
+CURRENT NEWS TO CONSIDER:
+- The SAVE America Act (voter suppression bill requiring passport/birth cert to register) is going to a Senate vote THIS WEEK — Trump has said he won't sign other bills until it passes. 21 million Americans lack the required documents. Marc Elias calls it "large scale voter suppression."
+- March 28 No Kings III protests — 2,400+ events planned nationwide, FT6 wants voter drives at every one
+- Democrats won multiple special elections in recent weeks
+- Midterms are ~8 months away, FT6 is running a 6-phase voter registration plan
+
+YOUR TASKS:
+
+1. LIST LAST WEEK'S BLURBS: Show the blurb headings you found above, cleaned up and organized by section (Opening, Big News, Events, Volunteer Ops, But Wait There's More).
+
+2. SUGGEST 4 OPENING THEME OPTIONS for next week. Each option = one punchy ALL-CAPS title + one sentence explaining the hook and how it connects to the mission. Make them genuinely different from each other (different categories).
+
+3. SUGGEST A BLURB STRUCTURE for next week — recommended section headings only (not full text), based on what's timely and what FT6 typically covers.
+
+4. SUGGEST A CTA for each opening theme option — one sentence showing how the call-to-action connects to the theme.
+
+Format your response as clean HTML using <h3> for section headers, <ul>/<li> for lists, <strong> for theme titles, and <p> for explanations. Use inline styles sparingly. Keep it tight — this is an ideation tool, not a writing tool.`;
+
+                const aiResp = await fetch('/.netlify/functions/ai-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: aiPrompt, maxTokens: 2000 })
+                });
+                const aiData = await aiResp.json();
+                const html = aiData.result || aiData.content || '<p>No response from AI.</p>';
+
+                results.innerHTML = `
+                    <div style="margin-top:24px;border-top:2px solid #e2e8f0;padding-top:20px">
+                        ${html}
+                    </div>
+                `;
+
+            } catch(err) {
+                results.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '\uD83D\uDDDE\uFE0F Blurbinate!';
+            }
+        }
+
 
     </script>
 </body>
