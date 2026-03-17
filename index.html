@@ -1768,17 +1768,37 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
 
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.textContent = 'Asking Claude...';
-                const today = new Date().toLocaleDateString("en-US", {month:"long", day:"numeric", year:"numeric"});
-                const aiPrompt = `You are helping write the next Field Team 6 Weekly newsletter (going out around ${today}).
+                                                const aiPrompt = `You are helping write the next Field Team 6 Weekly newsletter (going out around March 16, 2026).
 
-LAST NEWSLETTER BLURB SECTIONS (Mar 12, 2026 — "LET'S PUT ON A SHOW"):
-1. LET'S PUT ON A SHOW! — COO Dale Roy Robinson's origin story + $3M fundraising pitch; we pivoted in 2020, raised $1.2M, 700k people registered, Biden won. Now 8.3M registrations in, need to raise $3M more.
-2. BIG NEWS — March 28 No Kings III: 2,400 voter drives planned nationwide. Email helpmydrive@fieldteam6.org for concierge help.
-3. 1 MILLION NEW RECORDS! — Bought 993,189 new data records for Phase 1 & 2 of 6-phase plan.
-4. BIG THANKS TO RECURRING DONORS — ActBlue page migration; set up new recurring donation.
-5. EVENTS — In-person drives in GA/PA/CA/MI/NV; Postcard with Miriam (3/13); Social Storm Party w/ BlueVoterGuide (3/18); Midterm Game Plan webinar w/ DNC Chair Ken Martin (3/18); Postcard Party Hard (3/21); Donut fundraiser with Donuts+Democracy (4/2).
-6. VOLUNTEER OPS — In-person drives, postcard AZ/CO/GA/IA/ME/NC/NE/NJ/NY/PA, texting, social storming on Bluesky/Insta/WhatsApp, PleaseGrowASpine.org.
-7. BUT WAIT, THERE'S MORE! — NC pre-printed postcard kits; new rainbow "I can help you register to vote!" t-shirt.
+LAST NEWSLETTER (Mar 12, 2026):
+
+OPENING: LET'S PUT ON A SHOW — FT6 origin story + $3M fundraising pitch from COO Dale Roy Robinson; 8.3M registrations in, need to pivot and raise more.
+
+BIG NEWS
+- 3/28 - No Kings III - LETS TURN NO KINGS III INTO 2,400 VOTER DRIVES! (host a voter drive at a protest near you)
+- 1 MILLION NEW RECORDS! (bought 993k new data records for 6-phase plan)
+- BIG THANKS TO OUR RECURRING DONORS AND...! (ActBlue page migration for recurring donors)
+
+EVENTS - In-person Voter Drives
+- 3/14 - GA (Savannah), PA (Perkasie)
+- 3/18 - CA (Indio)
+- 3/19 - CA (Cypress)
+- 3/21 - PA (Glen Mills)
+- 3/24 - CA (Norwalk)
+- 3/25 - MI (East Lansing), CA (Sacramento)
+- 3/28 (NO KINGS) - GA (Savannah), NV (Henderson), CA (Woodland Hills), CA (Santa Monica), CA (Los Angeles)
+- 4/9 - CA (Palm Desert)
+- 4/21 - CA (Long Beach)
+- 4/28 - MI (Lansing)
+- 5/8-5/9 - CA (Davis)
+Also: Postcard with Miriam (3/13), Social Storm Party w/ BlueVoterGuide (3/18), Midterm Game Plan w/ DNC Chair Ken Martin (3/18), Postcard Party Hard (3/21), Donut fundraiser w/ Donuts+Democracy (4/2)
+
+VOL OPS
+In-person drives (CA/GA/MI/NV/PA), postcarding AZ/CO/GA/IA/ME/NC/NE/NJ/NY/PA, texting, social storming (Bluesky/Insta/WhatsApp), PleaseGrowASpine.org
+
+BUT WAIT
+- NC PRE-PRINTED POSTCARDS NEED YOU!
+- NEW SHIRT, WHO DIS?! (rainbow "I can help you register to vote!" shirt with QR code)
 
 RECENT OPENING THEMES (newest first — do NOT repeat same category two weeks in a row):
 - Mar 12: LET'S PUT ON A SHOW (entertainment metaphor / fundraising pivot story)
@@ -1795,23 +1815,46 @@ VOICE & STYLE RULES:
 - Mix urgency + humor + humanity — never just doom-and-gloom
 - Pop culture / movie / music / historical references welcome
 - Direct address to reader; self-deprecating humor fine
-- CTA always includes some combo of: Volunteer! Donate! Spread the word!
+- CTA: some combo of Volunteer! Donate! Spread the word!
 - Tagline: "Register Democrats. Save the world."
 
-KEY CONTEXT FOR THIS WEEK (Mar 19, 2026):
-- No Kings III march is March 28 — 2,400+ protests nationwide, FT6 wants a voter drive at every one
-- Midterms are the big strategic backdrop — Senate flippable
-- FT6 needs to raise $3M in next few months to register 3M new voters
-- The "put on a show" / pivot / fundraising theme was JUST used — do not repeat it
+KEY CONTEXT (week of Mar 19, 2026):
+- No Kings III march is March 28 — 2,400+ protests, FT6 wants a voter drive at every one
+- Midterms are the big strategic backdrop — Senate is flippable
+- FT6 needs to raise $3M to register 3M new voters
+- Do NOT repeat the "put on a show" / entertainment category just used
 
-YOUR TASK:
-1. List the blurb section headings from the LAST newsletter above (already provided — just reformat them cleanly as a numbered list).
-2. Suggest 4 punchy opening theme options for NEXT week. For each: ALL-CAPS title + one sentence on the hook/angle/category.
-3. Pick your top recommendation and explain why in 1–2 sentences.
-4. Draft the opening blurb paragraph for your top pick (2–3 sentences, first-person, warm + urgent + a little witty, like the newsletter voice).
-5. Suggest a matching CTA sign-off line.
+YOUR OUTPUT — use this exact structure:
 
-Format as clean HTML: <h3> for section headers, <ul><li> for lists, <strong> for theme titles, <p> for text. No markdown.`; 
+## LAST NEWSLETTER SUMMARY
+OPENING: [title] — [one sentence]
+
+BIG NEWS
+- [date if any] - [blurb title]
+(etc.)
+
+EVENTS - In-person Voter Drives
+- [date] - [location(s)]
+(etc., then list other events on one line each)
+
+VOL OPS
+
+BUT WAIT
+- [item]
+
+## OPENING THEME OPTIONS
+Give 4 options. Each = ALL-CAPS title + one sentence on the hook/category. Make them genuinely different.
+
+## TOP PICK
+[Title] — [1-2 sentences on why it fits this moment]
+
+## DRAFT OPENING BLURB
+[2-3 sentences, first-person, warm + urgent + a little witty, newsletter voice]
+
+## CTA SIGN-OFF
+[One punchy line]
+
+Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists. No markdown, no triple backticks.`; 
 
                 const aiResp = await fetch('/.netlify/functions/ai-check', {
                     method: 'POST',
