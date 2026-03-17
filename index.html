@@ -1147,7 +1147,7 @@
 
             // Build AI prompt
             const newsletterCtx = contextText || linkText || href;
-            const aiPrompt = `You are a proofreader for a political newsletter. A link appears in the newsletter and you must determine if it goes to the correct destination.
+            let aiPrompt = `You are a proofreader for a political newsletter. A link appears in the newsletter and you must determine if it goes to the correct destination.
 
 NEWSLETTER CONTEXT (the text surrounding this link):
 ${newsletterCtx.substring(0,600)}
@@ -1768,7 +1768,7 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
 
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Blurbinatin’';
-                                                const aiPrompt = `You are helping write the next Field Team 6 Weekly newsletter (going out around March 16, 2026).
+                                                let aiPrompt = `You are helping write the next Field Team 6 Weekly newsletter (going out around March 16, 2026).
 
 LAST NEWSLETTER (Mar 12, 2026):
 
