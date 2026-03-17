@@ -1759,7 +1759,9 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
         
 
         async function runBlurbinate() {
-            try {
+                      const btn = document.getElementById('blurbinateBtn');
+          const results = document.getElementById('blurbinateResults');
+try {
                 // Step 2: Extract blurb headings from the HTML
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(proofData.html, 'text/html');
