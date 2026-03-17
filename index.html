@@ -1767,7 +1767,7 @@ try {
 LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT PEOPLE (Feb 2026), EMERGENCY PROTOCOLS (Jan 2026), THERE IS NOW A PATH TO THE SENATE (Jan 2026), LOVE AND A PLAN (Jan 2026), TWO HOT DOGS EXTRA ONIONS AND MUSTARD (Dec 2025), REDISCOVER LOVE (Dec 2025), TECTONIC (Dec 2025), GIVING THANKS (Nov 2025), ORGANIZING TURNS THE IMPOSSIBLE INTO REALITY (Nov 2025), HONOR YOUR RIGHTEOUS WRATH (Nov 2025), SING IT (Nov 2025), THROUGH THE RIBBON (Oct 2025), ANYTHING IS POSSIBLE (Oct 2025), REMEMBER YOU EXIST (Oct 2025), STAY LOUD STAY UNITED STAY BRAVE (Sep 2025), MAKE HISTORY WITH US (Sep 2025), NONVIOLENCE IS THE WAY FORWARD (Sep 2025), WE WON'T BACK DOWN (Sep 2025), UPSET VICTORY FOR THE RESISTANCE (Aug 2025), LAUNCHING BIGGEST IN-PERSON VOTER DRIVE CAMPAIGN SINCE CIVIL RIGHTS (Aug 2025), FROM THE SWAMP TO THE HARBOR (Aug 2025), DEMOCRATS SHOW A SPINE (Aug 2025), 10000 HOURS AND THE MATH OF MOVEMENTS (Jul 2025), DOOM-SKIPPING AND HOPE-SCROLLING (Jul 2025), DO IT FOR JOHN LEWIS (Jul 2025), BIG BEAUTIFUL BLUE WAVE COMING (Jul 2025), HOLLYWOOD NEEDS HEROES (Jun 2025), BIGGEST PROTEST IN HISTORY 5 MONTHS IN (Jun 2025), A WILDFIRE OF INSPIRATION (Jun 2025), LISTEN TO THE BOSS (Jun 2025), MISSION IMPOSSIBLE (May 2025), STICK TO THE ANTI-AUTOCRACY PLAYBOOK (May 2025), NEW PROBLEMS NEED NEW SOLUTIONS (May 2025), NOBODY KNOWS THIS (Apr 2025), NO GREATER POWER THAN THE PEOPLE (Apr 2025), PLEASE GROW A SPINE DOT ORG (Apr 2025), LANDSLIDE VICTORY FOR DEMOCRACY (Apr 2025), BREAKING UNBROKEN WINNING STREAK (Mar 2025), FIST IN THE AIR (Mar 2025), NO BLANK CHECK FOR TRUMP/MUSK (Mar 2025), HOW WE SURVIVE (Mar 2025), 3 BIG IDEAS (Feb 2025), CONTEST EVERY RACE (Feb 2025), TAKING IT TO THE STREETS (Feb 2025), DAMN THE TORPEDOES (Feb 2025), STOP THE MAGA VOTER SUPPRESSION BILL (Jan 2025), WE ARE BACK (Jan 2025), DAY ONE (Jan 2025), LETTER OF HOPE FROM HELL (Jan 2025)`;
 
                 // Step 4: Call AI with newsletter text + history + news search request
-                btn.textContent = 'Blurbinatin’...';
+                btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Blurbinatin’';
                                                 const aiPrompt = `You are helping write the next Field Team 6 Weekly newsletter (going out around March 16, 2026).
 
 LAST NEWSLETTER (Mar 12, 2026):
@@ -1826,7 +1826,7 @@ KEY CONTEXT (week of Mar 19, 2026):
 
 YOUR OUTPUT — use this exact structure, nothing more. Do NOT add extra descriptions or commentary.
 
-## LAST NEWSLETTER SUMMARY
+## LAST NEWSLETTER SUMMARY (3/12/26)
 OPENING: [title] — [one sentence]
 
 BIG NEWS
@@ -1852,6 +1852,13 @@ BUT WAIT
 ## OPENING THEME OPTIONS
 Give exactly 4 options. Each = ALL-CAPS title + one sentence on the hook/category. No favorite. No draft. No CTA.
 
+## THIS WEEK'S NEWS
+Search the web right now for the 5 most recent and relevant headlines about: voter registration, voting rights, voter suppression, 2026 elections, midterms, civic activism, democracy. Format each as:
+- [Headline] ([Source], [date])
+
+## UPCOMING EVENTS TO PROMOTE
+MOBILIZE_EVENTS_PLACEHOLDER
+
 FORMAT RULES for HTML output:
 - Use <h2 style="margin-top:28px;margin-bottom:6px"> for BIG NEWS, EVENTS, VOL OPS, BUT WAIT, OPENING THEME OPTIONS
 - Use <h2 style="margin-top:0;margin-bottom:6px"> for LAST NEWSLETTER SUMMARY (first heading, no top margin)
@@ -1862,7 +1869,32 @@ FORMAT RULES for HTML output:
 
 Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists. No markdown, no triple backticks.`; 
 
-                const aiResp = await fetch('/.netlify/functions/ai-check', {
+                // Fetch named + town-hall events from Mobilize
+        let mobilizeSection = '(none found)';
+        try {
+          const [namedResp, townResp] = await Promise.all([
+            fetch('https://api.mobilize.us/v1/organizations/1255/events?event_types=13,14&per_page=100&timeslot_start=gte_now'),
+            fetch('https://api.mobilize.us/v1/organizations/1255/events?event_types=3&per_page=100&timeslot_start=gte_now')
+          ]);
+          const [namedData, townData] = await Promise.all([namedResp.json(), townResp.json()]);
+          const allEvents = [...(namedData.data||[]), ...(townData.data||[])];
+          const skipWords = new Set(['The','A','An','For','And','Or','In','On','At','To','Join','With','How','Why','What','Get','Learn','Find','Help','Make','Take','Let','See','Our','Your','This','That','All','New','Free','Next','Come','Sign','Register','Vote','Voter','Drive','Voting','Democracy','Field','Team','No','Yes','Are','Is','Was','Were','Be','Been','Being','About','Into']);
+          const named = allEvents.filter(e => {
+            const words = (e.title||'').match(/\b[A-Z][a-z]{2,}\b/g)||[];
+            return words.some(w => !skipWords.has(w));
+          }).slice(0,12);
+          if (named.length) {
+            mobilizeSection = named.map(e => {
+              const ts = e.timeslots?.[0]?.start_date;
+              const d = ts ? new Date(ts*1000) : null;
+              const dateStr = d ? (d.getMonth()+1)+'/'+(d.getDate()) : '';
+              return '- '+e.title+(dateStr?' ('+dateStr+')':'');
+            }).join('\n');
+          }
+        } catch(mobErr) { mobilizeSection = '(error: '+mobErr.message+')'; }
+        aiPrompt = aiPrompt.split('MOBILIZE_EVENTS_PLACEHOLDER').join(mobilizeSection);
+
+        const aiResp = await fetch('/.netlify/functions/ai-check', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: aiPrompt })
@@ -1879,8 +1911,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
             } catch(err) {
                 results.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
             } finally {
-                btn.disabled = false;
-                btn.textContent = '\uD83D\uDDDE\uFE0F Blurbinate!';
+                btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '\uD83D\uDDE8\uFE0F Blurbinate!';
             }
         }
 
