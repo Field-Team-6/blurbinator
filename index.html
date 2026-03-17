@@ -1768,48 +1768,55 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
 
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.textContent = 'Asking Claude...';
-                const aiPrompt = `You are helping write the Field Team 6 weekly newsletter. FIRST: use the gmail tool to search for the most recent email with subject containing 'Field Team 6 Weekly'. Read its full content to understand last week's newsletter - the opening theme, headings, and tone. Use that as your primary source for last week. If Gmail search fails, fall back to the headings below.
+                const today = new Date().toLocaleDateString("en-US", {month:"long", day:"numeric", year:"numeric"});
+                const aiPrompt = `You are helping write the next Field Team 6 Weekly newsletter (going out around ${today}).
 
- FIRST: use the gmail tool to search for the most recent email with subject containing 'Field Team 6 Weekly'. Read its full content to understand last week's newsletter - the opening theme, headings, and tone. Use that as your primary source for last week. If Gmail search fails, fall back to the headings below.
+LAST NEWSLETTER BLURB SECTIONS (Mar 12, 2026 — "LET'S PUT ON A SHOW"):
+1. LET'S PUT ON A SHOW! — COO Dale Roy Robinson's origin story + $3M fundraising pitch; we pivoted in 2020, raised $1.2M, 700k people registered, Biden won. Now 8.3M registrations in, need to raise $3M more.
+2. BIG NEWS — March 28 No Kings III: 2,400 voter drives planned nationwide. Email helpmydrive@fieldteam6.org for concierge help.
+3. 1 MILLION NEW RECORDS! — Bought 993,189 new data records for Phase 1 & 2 of 6-phase plan.
+4. BIG THANKS TO RECURRING DONORS — ActBlue page migration; set up new recurring donation.
+5. EVENTS — In-person drives in GA/PA/CA/MI/NV; Postcard with Miriam (3/13); Social Storm Party w/ BlueVoterGuide (3/18); Midterm Game Plan webinar w/ DNC Chair Ken Martin (3/18); Postcard Party Hard (3/21); Donut fundraiser with Donuts+Democracy (4/2).
+6. VOLUNTEER OPS — In-person drives, postcard AZ/CO/GA/IA/ME/NC/NE/NJ/NY/PA, texting, social storming on Bluesky/Insta/WhatsApp, PleaseGrowASpine.org.
+7. BUT WAIT, THERE'S MORE! — NC pre-printed postcard kits; new rainbow "I can help you register to vote!" t-shirt.
 
- Field Team 6 does partisan in-person voter registration — their mission is "Register Democrats. Save the world."
-
-(See Gmail for last week's newsletter headings and content)
-
-${historyContext}
+RECENT OPENING THEMES (newest first — do NOT repeat same category two weeks in a row):
+- Mar 12: LET'S PUT ON A SHOW (entertainment metaphor / fundraising pivot story)
+- Feb 26: CUT TRUMP'S TERM IN HALF (direct urgency / midterms)
+- Feb 20: THE RIGHT PEOPLE (milestone / pride)
+- Jan 22: EMERGENCY PROTOCOLS (crisis urgency)
+- Jan 15: THERE IS NOW A PATH TO THE SENATE (current news hook)
+- Jan 8: LOVE AND A PLAN (philosophical / motivational)
+- Dec 18: TWO HOT DOGS, EXTRA ONIONS & MUSTARD (humor-first)
+- Dec 11: REDISCOVER LOVE (self-care / activism-as-therapy)
 
 VOICE & STYLE RULES:
-- Opening themes are ALL CAPS, punchy, 2-6 words ideal
-- Mix urgency + humor + humanity — never pure doom
-- Pop culture refs, historical echoes, sports/race metaphors all fair game
-- Self-deprecating humor welcome
-- Always ties back to partisan voter registration and why it matters right now
-- Categories to rotate: current news hook, self-care/activism-as-therapy, historical inspiration, pop culture riff, direct urgency, FT6 milestone/pride, philosophical/motivational, humor-first
-- Do NOT repeat a theme category used in the last 2 newsletters
-- The last newsletter was "LET'S PUT ON A SHOW" (entertainment/pivot metaphor) — avoid similar metaphors
+- ALL CAPS title, punchy, 2–6 words ideal
+- Mix urgency + humor + humanity — never just doom-and-gloom
+- Pop culture / movie / music / historical references welcome
+- Direct address to reader; self-deprecating humor fine
+- CTA always includes some combo of: Volunteer! Donate! Spread the word!
+- Tagline: "Register Democrats. Save the world."
 
-CURRENT NEWS TO CONSIDER:
-- The SAVE America Act (voter suppression bill requiring passport/birth cert to register) is going to a Senate vote THIS WEEK — Trump has said he won't sign other bills until it passes. 21 million Americans lack the required documents. Marc Elias calls it "large scale voter suppression."
-- March 28 No Kings III protests — 2,400+ events planned nationwide, FT6 wants voter drives at every one
-- Democrats won multiple special elections in recent weeks
-- Midterms are ~8 months away, FT6 is running a 6-phase voter registration plan
+KEY CONTEXT FOR THIS WEEK (Mar 19, 2026):
+- No Kings III march is March 28 — 2,400+ protests nationwide, FT6 wants a voter drive at every one
+- Midterms are the big strategic backdrop — Senate flippable
+- FT6 needs to raise $3M in next few months to register 3M new voters
+- The "put on a show" / pivot / fundraising theme was JUST used — do not repeat it
 
-YOUR TASKS:
+YOUR TASK:
+1. List the blurb section headings from the LAST newsletter above (already provided — just reformat them cleanly as a numbered list).
+2. Suggest 4 punchy opening theme options for NEXT week. For each: ALL-CAPS title + one sentence on the hook/angle/category.
+3. Pick your top recommendation and explain why in 1–2 sentences.
+4. Draft the opening blurb paragraph for your top pick (2–3 sentences, first-person, warm + urgent + a little witty, like the newsletter voice).
+5. Suggest a matching CTA sign-off line.
 
-1. LIST LAST WEEK'S BLURBS: Show the blurb headings you found above, cleaned up and organized by section (Opening, Big News, Events, Volunteer Ops, But Wait There's More).
-
-2. SUGGEST 4 OPENING THEME OPTIONS for next week. Each option = one punchy ALL-CAPS title + one sentence explaining the hook and how it connects to the mission. Make them genuinely different from each other (different categories).
-
-3. SUGGEST A BLURB STRUCTURE for next week — recommended section headings only (not full text), based on what's timely and what FT6 typically covers.
-
-4. SUGGEST A CTA for each opening theme option — one sentence showing how the call-to-action connects to the theme.
-
-Format your response as clean HTML using <h3> for section headers, <ul>/<li> for lists, <strong> for theme titles, and <p> for explanations. Use inline styles sparingly. Keep it tight — this is an ideation tool, not a writing tool.`;
+Format as clean HTML: <h3> for section headers, <ul><li> for lists, <strong> for theme titles, <p> for text. No markdown.`; 
 
                 const aiResp = await fetch('/.netlify/functions/ai-check', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: aiPrompt, maxTokens: 2000, mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail' }] })
+                    body: JSON.stringify({ prompt: aiPrompt })
                 });
                 const aiData = await aiResp.json();
                 const html = aiData.result || aiData.content || '<p>No response from AI.</p>';
