@@ -45,8 +45,9 @@ exports.handler = async function(event, context) {
                 'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
+                model: 'claude-haiku-4-5-20251001',
                 max_tokens: 4000,
+                tools: [{ type: 'web_search_20250305', name: 'web_search' }],
                 messages: [{ role: 'user', content: prompt }]
             })
         });
@@ -61,7 +62,7 @@ exports.handler = async function(event, context) {
             };
         }
 
-        const text = (data.content && data.content[0] && data.content[0].text) || '';
+        const text = ((data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n') || (data.content && data.content[0] && data.content[0].text)) || '';
         return {
             statusCode: 200,
             headers,
