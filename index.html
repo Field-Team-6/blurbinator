@@ -674,10 +674,7 @@
             <div class="info">
                 Reads the most recent newsletter, lists its blurb headings, then recommends blurbs and opening theme options for next week — informed by past themes, current news, and the FT6 mission.
             </div>
-            <label class="input-label">Most recent newsletter proof URL (auto-fills from Proof Link Checker)</label>
-            <input type="text" class="url-input" id="blurbinateUrl"
-                placeholder="https://campaignlp.constantcontact.com/em/..."
-                onkeydown="if(event.key==='Enter') runBlurbinate()" />
+            
             <button class="generate-btn" onclick="runBlurbinate()" id="blurbinateBtn">
                 🗞️ Blurbinate!
             </button>
@@ -1759,32 +1756,10 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
 
         // ==== TOOL 5: BLURBINATE ====
 
-        // Auto-fill blurbinate URL from proof checker
-        document.getElementById('proofUrl')?.addEventListener('input', function() {
-            const blurbUrl = document.getElementById('blurbinateUrl');
-            if (blurbUrl && !blurbUrl.value) blurbUrl.value = this.value;
-        });
+        
 
         async function runBlurbinate() {
-            const url = document.getElementById('blurbinateUrl').value.trim();
-            const btn = document.getElementById('blurbinateBtn');
-            const results = document.getElementById('blurbinateResults');
-            if (!url) { alert('Please enter the newsletter proof URL.'); return; }
-
-            btn.disabled = true;
-            btn.textContent = 'Fetching newsletter...';
-            results.innerHTML = '<p style="color:#666;font-style:italic">Fetching newsletter and searching current news...</p>';
-
             try {
-                // Step 1: Fetch newsletter HTML via fetch-proof
-                const proofResp = await fetch('/.netlify/functions/fetch-proof', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                const proofData = await proofResp.json();
-                if (!proofData.html) throw new Error('Could not fetch newsletter.');
-
                 // Step 2: Extract blurb headings from the HTML
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(proofData.html, 'text/html');
@@ -1808,6 +1783,8 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.textContent = 'Asking Claude...';
                 const aiPrompt = `You are helping write the Field Team 6 weekly newsletter. FIRST: use the gmail tool to search for the most recent email with subject containing 'Field Team 6 Weekly'. Read its full content to understand last week's newsletter - the opening theme, headings, and tone. Use that as your primary source for last week. If Gmail search fails, fall back to the headings below.
+
+ FIRST: use the gmail tool to search for the most recent email with subject containing 'Field Team 6 Weekly'. Read its full content to understand last week's newsletter - the opening theme, headings, and tone. Use that as your primary source for last week. If Gmail search fails, fall back to the headings below.
 
  Field Team 6 does partisan in-person voter registration — their mission is "Register Democrats. Save the world."
 
