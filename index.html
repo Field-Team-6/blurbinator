@@ -1939,6 +1939,8 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                   siblings.forEach(n => blueWrap.appendChild(n));
                 }
 
+                // Style ul bullets in the blurbinate output
+                results.querySelectorAll('ul').forEach(ul=>{if(!ul.style.paddingLeft)ul.style.paddingLeft='20px';});
                 // Refresh buttons on THIS WEEK'S NEWS and OPENING THEME headers
                 results.querySelectorAll('h2').forEach(h2 => {
                   const txt = h2.textContent.trim().toUpperCase();
@@ -1970,7 +1972,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                     if(_svg){_svg.style.cssText='';} rb.disabled=false;
                     rb.disabled=false;
                   };
-                  h2.appendChild(rb);if(rType==='themes'){const _warn=document.createElement('p');_warn.textContent='(WARNING: ideas may be bizarre, terrible, dumb, bad, or helpful)';_warn.style.cssText='font-style:italic;font-size:12px;color:#555;margin:4px 0 0 0;';h2.parentNode.insertBefore(_warn,h2.nextSibling);}
+                  h2.appendChild(rb);if(rType==='themes'){const _oldWarn=h2.parentNode.querySelector('p[data-warn]');if(_oldWarn)_oldWarn.remove();const _warn=document.createElement('p');_warn.dataset.warn='1';_warn.textContent='(WARNING: ideas may be bizarre, terrible, dumb, bad, or helpful)';_warn.style.cssText='font-style:italic;font-size:12px;color:#555;margin:4px 0 0 0;';h2.parentNode.insertBefore(_warn,h2.nextSibling);}
                 });
 
 
