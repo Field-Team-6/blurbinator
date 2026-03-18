@@ -1889,7 +1889,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
               const d = ts ? new Date(ts*1000) : null;
               const dateStr = d ? (d.getMonth()+1)+'/'+(d.getDate()) : '';
               const url = 'https://www.mobilize.us/ft6/event/'+e.id+'/';
-              return e.title+(dateStr?' ('+dateStr+')':'')+' - <a href="'+url+'">Mobilize event link</a>';
+              return e.title+(dateStr?' ('+dateStr+')':'')+' - <a href="'+url+'">Sign up HERE</a>';
             }).join('\n');
           }
         } catch(mobErr) { mobilizeSection = '(error: '+mobErr.message+')'; }
@@ -1908,6 +1908,29 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                         ${html}
                     </div>
                 `;
+                // Insert BRAINSTORM banner + blue bg after BUT WAIT section
+                const allH2s = results.querySelectorAll('h2');
+                let butWaitH2 = null;
+                allH2s.forEach(h => { if (h.textContent.trim().toUpperCase() === 'BUT WAIT') butWaitH2 = h; });
+                if (butWaitH2) {
+                  // Find the ul after BUT WAIT (skip any p tags)
+                  let afterButWait = butWaitH2.nextElementSibling;
+                  while (afterButWait && afterButWait.tagName !== 'UL') afterButWait = afterButWait.nextElementSibling;
+                  const insertAfter = afterButWait || butWaitH2;
+                  // Create banner
+                  const banner = document.createElement('div');
+                  banner.style.cssText = 'margin:28px -20px 0 -20px;padding:12px 20px;background:#1a3a6b;color:#FFA703;font-family:Raleway,sans-serif;font-weight:900;font-size:18px;letter-spacing:2px;text-align:center';
+                  banner.textContent = 'BRAINSTORM THE NEXT ONE';
+                  insertAfter.insertAdjacentElement('afterend', banner);
+                  // Wrap everything after banner in blue bg
+                  const blueWrap = document.createElement('div');
+                  blueWrap.style.cssText = 'background:#3D9BE9;margin:0 -20px;padding:20px 20px;border-radius:0 0 12px 12px';
+                  const siblings = [];
+                  let node = banner.nextElementSibling;
+                  while (node) { siblings.push(node); node = node.nextElementSibling; }
+                  banner.insertAdjacentElement('afterend', blueWrap);
+                  siblings.forEach(n => blueWrap.appendChild(n));
+                }
 
 
             } catch(err) {
