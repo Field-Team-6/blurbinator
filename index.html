@@ -844,7 +844,7 @@
                 outputText.dataset.plaintext = blurb;
                 outputText.dataset.htmltext = `<p style="font-family:Arial,sans-serif;font-size:16px;color:#1f3864;">${blurb}</p>`;
 
-                countDiv.textContent = `${states.length} states currently active: ${states.join(', ')}`;
+                countDiv.textContent = "";
                 output.classList.add('visible');
 
             } catch (err) {
@@ -1909,9 +1909,10 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                 const aiData = await aiResp.json();
                 const html = aiData.text || aiData.text || '<p>No response from AI.</p>';
 
+                const cleanHtml = html.replace(/##\s*/g,'');
                 results.innerHTML = `
                     <div style="margin:24px -40px -40px -40px;border-top:2px solid #e2e8f0;padding:20px 40px 0 40px;overflow:hidden">
-                        ${html}
+                        ${cleanHtml}
                     </div>
                 `;
                 // Insert BRAINSTORM banner + blue bg after BUT WAIT section
@@ -1944,18 +1945,18 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                   let rType = txt.includes("THIS WEEK") ? 'news' : txt.includes("OPENING THEME") ? 'themes' : null;
                   if (!rType) return;
                   const rb = document.createElement('button');
-                  rb.innerHTML = '&#x21BB;';
-                  rb.title = 'Get fresh ' + (rType==='news'?'headlines':'themes');
-                  rb.style.cssText = 'margin-left:10px;background:none;border:none;font-size:22px;cursor:pointer;color:#1a3a6b;vertical-align:middle;padding:0;opacity:0.6;transition:opacity 0.2s';
-                  rb.onmouseenter=()=>rb.style.opacity='1';
-                  rb.onmouseleave=()=>rb.style.opacity='0.6';
+                  rb.title = 'Refresh';
+                  rb.style.cssText = 'margin-left:10px;background:none;border:none;cursor:pointer;vertical-align:middle;padding:2px;border-radius:50%;transition:background 0.2s;line-height:0';
+                  rb.innerHTML = '<svg id="rb-svg-'+Math.random().toString(36).slice(2)+'" width="16" height="16" viewBox="0 0 24 24" fill="#1a3a6b" xmlns="http://www.w3.org/2000/svg"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
+                  rb.onmouseenter=()=>rb.style.background='rgba(26,58,107,0.1)';
+                  rb.onmouseleave=()=>rb.style.background='none';
                   rb.onclick = async () => {
-                    rb.style.transition='transform 0.1s'; rb.style.display='inline-block'; rb.classList.add('blurb-spinning');
+                    rb.querySelector('svg').style.animation='blurb-spin 0.8s linear infinite'; rb.disabled=true;
                     rb.disabled=true;
                     try {
                       const p = rType==='news'
                         ? 'Search the web NOW for 5 fresh headlines about voter registration, voting rights, voter suppression, 2026 midterms, civic activism — DIFFERENT from any already shown. Output ONLY a <ul> with <li> items. No intro. Each item: [Headline] (<a href="[URL]" target="_blank">[Publication]</a>, [date]). Headline text must NOT be a link.'
-                        : 'You are writing opening theme options for the Field Team 6 Weekly newsletter. Field Team 6 does in-person voter registration in swing states — partisan but with humor and humanity. Generate 4 NEW opening theme options — totally different from any shown on screen. Rules: ALL CAPS title (2-6 words ideal), punchy, mix urgency+humor+humanity, pop culture/movie/music/historical refs welcome, direct address to reader is fine, self-deprecating humor welcome. NEVER imply cheating (stack the deck, rig) or violence (fight, battle, war, contact sport, clash). Do NOT repeat a theme category used in the last 4 weeks. Recent themes used (do not repeat category): LET\'S PUT ON A SHOW (entertainment/pivot), CUT TRUMP\'S TERM IN HALF (urgency/midterms), THE RIGHT PEOPLE (milestone/pride), EMERGENCY PROTOCOLS (crisis). Output ONLY a <ul><li> list, no intro text at all. Each item: <strong>TITLE</strong> &mdash; one sentence on hook/category.';
+                        : 'You are writing opening theme options for the FT6 Weekly newsletter. FT6 does in-person voter registration in swing states with humor and humanity. 8.3M registered. Goal: 3M more, flip Senate 2026. Context: No Kings 3/28 protests, SAVE Act voter suppression.\n\nDo NOT repeat these past themes or their category: LETS PUT ON A SHOW, CUT TRUMPS TERM IN HALF, THE RIGHT PEOPLE, EMERGENCY PROTOCOLS, THERE IS NOW A PATH TO THE SENATE, LOVE AND A PLAN, TWO HOT DOGS EXTRA ONIONS, REDISCOVER LOVE, TECTONIC, GIVING THANKS, ORGANIZING TURNS THE IMPOSSIBLE INTO REALITY, HONOR YOUR RIGHTEOUS WRATH, SING IT, THROUGH THE RIBBON, ANYTHING IS POSSIBLE, REMEMBER YOU EXIST, STAY LOUD STAY UNITED STAY BRAVE, MAKE HISTORY WITH US, NONVIOLENCE IS THE WAY FORWARD, WE WONT BACK DOWN, UPSET VICTORY FOR THE RESISTANCE, DEMOCRATS SHOW A SPINE, 10000 HOURS THE MATH OF MOVEMENTS, DOOM-SKIPPING AND HOPE-SCROLLING, DO IT FOR JOHN LEWIS, BIG BEAUTIFUL BLUE WAVE COMING, HOLLYWOOD NEEDS HEROES, BIGGEST PROTEST IN HISTORY, A WILDFIRE OF INSPIRATION, LISTEN TO THE BOSS, MISSION IMPOSSIBLE, STICK TO THE ANTI-AUTOCRACY PLAYBOOK, NEW PROBLEMS NEED NEW SOLUTIONS, NO GREATER POWER THAN THE PEOPLE, PLEASE GROW A SPINE, LANDSLIDE VICTORY FOR DEMOCRACY, BREAKING UNBROKEN WINNING STREAK, FIST IN THE AIR, HOW WE SURVIVE, 3 BIG IDEAS, CONTEST EVERY RACE, TAKING IT TO THE STREETS, DAMN THE TORPEDOES, STOP THE MAGA VOTER SUPPRESSION BILL, WE ARE BACK, DAY ONE, LETTER OF HOPE FROM HELL, WHAT WE KNOW THAT AMERICA DOES NOT, UNBREAKABLE, WE WILL DO THIS TOGETHER, ALL GAS NO BREAKS, ONE VOTE COULD WIN IT ALL, HOW THE LIGHT GETS IN, WERE GONNA WEAR PANTS, WERE EXPANDING THE MAP, HISTORIC ADVANCE IN VOTER REGISTRATION, TAKE TWO.\n\nVOICE: ALL CAPS 2-6 words, punchy, mix urgency+humor+humanity, pop culture/historical refs welcome, direct address fine, NEVER cheating/violence metaphors. Rotate categories: current news hook, self-care/activism, historical inspiration, pop culture riff, urgency, FT6 milestone, philosophical, humor-first.\n\nGenerate 4 themes from 4 DIFFERENT categories. Output ONLY <ul><li> list, no intro. Each: <strong>TITLE</strong> &mdash; one sentence hook.';
                       const resp = await fetch('/.netlify/functions/ai-check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:p})});
                       const data = await resp.json();
                       const newHtml = ((data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join(''))||data.text||'';
@@ -1966,7 +1967,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                       tmp.querySelectorAll('ul').forEach(ul=>{ if(!ul.style.paddingLeft) ul.style.paddingLeft='20px'; });
                       [...tmp.children].forEach(c=>h2.parentNode.insertBefore(c,next||null));
                     } catch(e){console.error(e);}
-                    rb.classList.remove('blurb-spinning');
+                    rb.querySelector('svg').style.animation=''; rb.disabled=false;
                     rb.disabled=false;
                   };
                   h2.appendChild(rb);
