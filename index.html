@@ -1858,7 +1858,7 @@ BUT WAIT
 Give exactly 4 options. Each = ALL-CAPS title + one sentence on the hook/category. No favorite. No draft. No CTA.
 
 ## THIS WEEK'S NEWS
-Search the web right now for the 5 most recent and relevant headlines about: voter registration, voting rights, voter suppression, 2026 elections, midterms, civic activism, democracy. Rules:
+Search the web right now for the 5 most recent and relevant headlines about: voter registration, voting rights, voter suppression, 2026 elections, midterms, civic activism, democracy. Prioritize Democracy Docket (democracydocket.com), Brennan Center (brennancenter.org), Robert Hubbell's "Today's Edition" substack, and Jessica Craven's "Chop Wood, Carry Water" substack when relevant results exist. Rules:
 - Output NOTHING at all before the first ## heading. Not one word. No "I'll help", no "Let me search", no "Here's the framework", nothing. Start with ## immediately.
 - No "---" horizontal rules anywhere in the output
 - Format each news item as: - [Headline] (<a href="[full article URL]" target="_blank">[Publication Name]</a>, [date])
@@ -1948,7 +1948,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                   rb.onmouseenter=()=>rb.style.opacity='1';
                   rb.onmouseleave=()=>rb.style.opacity='0.6';
                   rb.onclick = async () => {
-                    rb.style.animation='spin 0.7s linear infinite';
+                    rb.style.transition='transform 0.1s'; rb.style.display='inline-block'; rb.classList.add('blurb-spinning');
                     rb.disabled=true;
                     try {
                       const p = rType==='news'
@@ -1960,9 +1960,11 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                       let next = h2.nextElementSibling;
                       while(next && next.tagName!=='H2'){const r=next;next=next.nextElementSibling;r.remove();}
                       const tmp=document.createElement('div');tmp.innerHTML=newHtml;
+                      // Preserve ul styling to match original bullet alignment
+                      tmp.querySelectorAll('ul').forEach(ul=>{ if(!ul.style.paddingLeft) ul.style.paddingLeft='20px'; });
                       [...tmp.children].forEach(c=>h2.parentNode.insertBefore(c,next||null));
                     } catch(e){console.error(e);}
-                    rb.style.animation='';
+                    rb.classList.remove('blurb-spinning');
                     rb.disabled=false;
                   };
                   h2.appendChild(rb);
