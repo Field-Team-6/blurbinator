@@ -748,7 +748,7 @@
                         const timeslot = futureTimeslots[0];
                         const date = new Date(timeslot.start_date * 1000);
                         const state = event.location.region;
-                        const city = event.location.locality.toUpperCase();
+                        const city = event.location.locality.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
                         const tz = event.timezone || 'America/New_York';
 
                         const parts = new Intl.DateTimeFormat('en-US', {
@@ -767,7 +767,7 @@
                         return {
                             date: timeslot.start_date,
                             text: `${state} (${city}) – ${get('weekday')}, ${get('month')}/${get('day')}${noKings} at ${timeStr}. RSVP HERE.`,
-                            html: `${state} (${city}) – ${get('weekday')}, ${get('month')}/${get('day')}${noKings} at ${timeStr}. RSVP <a href="${eventUrl}" target="_blank">HERE</a>.`,
+                            html: `${state} (${city}) – <strong>${get('weekday')}, ${get('month')}/${get('day')}${noKings}</strong> at <strong>${timeStr}</strong>. RSVP <a href="${eventUrl}" target="_blank">HERE</a>.`,
                         };
                     })
                     .filter(Boolean)
@@ -779,12 +779,16 @@
                 outputText.dataset.plaintext = events.map(e => `• ${e.text}`).join('\n');
 
                 const styledItems = events.map(e =>
-                    `<p style="font-family:Arial,sans-serif;font-size:16px;color:#1f3864;margin:4px 0;">• ${
+                    `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;margin:4px 0;">• ${
                         e.html.replace(/<a href="([^"]+)" target="_blank">HERE<\/a>/,
-                        `<a href="$1" style="color:#1f3864;text-decoration:underline;font-family:Arial,sans-serif;font-size:16px;">HERE</a>`)
+                        `<a href="$1" style="color:#030165;text-decoration:underline;font-family:Arial,sans-serif;font-size:16px;">HERE</a>`)
                     }</p>`
-                ).join('\n');
-                outputText.dataset.htmltext = `<div style="font-family:Arial,sans-serif;font-size:16px;color:#1f3864;">${styledItems}</div>`;
+                ).reduce((acc, item, i) => {
+                    acc.push(item);
+                    if ((i + 1) % 5 === 0) acc.push('<p style="margin:0;padding:0;line-height:0.8em;">&nbsp;</p>');
+                    return acc;
+                }, []).join('\n');
+                outputText.dataset.htmltext = `<div style="font-family:Arial,sans-serif;font-size:16px;color:#030165;">${styledItems}</div>`;
 
                 eventCount.textContent = `Found ${events.length} upcoming voter drive${events.length !== 1 ? 's' : ''}`;
                 output.classList.add('visible');
@@ -842,7 +846,7 @@
 
                 outputText.textContent = blurb;
                 outputText.dataset.plaintext = blurb;
-                outputText.dataset.htmltext = `<p style="font-family:Arial,sans-serif;font-size:16px;color:#1f3864;">${blurb}</p>`;
+                outputText.dataset.htmltext = `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;">${blurb}</p>`;
 
                 countDiv.textContent = "";
                 output.classList.add('visible');
@@ -1676,7 +1680,7 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                                 const isHotlink = issue.category === 'HOTLINK';
                                 const copyLabel = showPreview ? '📋 Copy corrected sentence' : '📋 Copy fix';
                                 if (showPreview) {
-                                    html += '<div style="margin-top:6px;font-family:Arial,sans-serif;font-size:16px;color:#1f3864;background:#edf2ff;padding:6px 10px;border-radius:4px;line-height:1.5;">' + escH(issue.copyText) + '</div>';
+                                    html += '<div style="margin-top:6px;font-family:Arial,sans-serif;font-size:16px;color:#030165;background:#edf2ff;padding:6px 10px;border-radius:4px;line-height:1.5;">' + escH(issue.copyText) + '</div>';
                                 }
                                 const dataHtml = issue.copyHtml ? ' data-html="' + escH(issue.copyHtml) + '"' : '';
                                 html += '<div style="margin-top:6px;"><button onclick="prCopyFix(this)" data-copy="' + escH(issue.copyText) + '"' + dataHtml + ' style="background:#3D9BE9;color:white;border:none;padding:5px 12px;border-radius:6px;font-family:Raleway,sans-serif;font-size:12px;font-weight:700;cursor:pointer;">' + copyLabel + (isHotlink && issue.copyHtml ? ' (with link)' : '') + '</button></div>';
