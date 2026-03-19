@@ -779,16 +779,16 @@
                 outputText.dataset.plaintext = events.map(e => `• ${e.text}`).join('\n');
 
                 const styledItems = events.map(e =>
-                    `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;margin:4px 0;">• ${
+                    `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;font-weight:normal;margin:4px 0;">• ${
                         e.html.replace(/<a href="([^"]+)" target="_blank">HERE<\/a>/,
-                        `<a href="$1" style="color:#030165;text-decoration:underline;font-family:Arial,sans-serif;font-size:16px;">HERE</a>`)
+                        `<a href="$1" style="color:#030165;text-decoration:underline;font-family:Arial,sans-serif;font-size:16px;font-weight:normal;">HERE</a>`)
                     }</p>`
                 ).reduce((acc, item, i) => {
                     acc.push(item);
                     if ((i + 1) % 5 === 0) acc.push('<p style="margin:0;padding:0;line-height:0.8em;">&nbsp;</p>');
                     return acc;
                 }, []).join('\n');
-                outputText.dataset.htmltext = `<div style="font-family:Arial,sans-serif;font-size:16px;color:#030165;">${styledItems}</div>`;
+                outputText.dataset.htmltext = `<div style="font-family:Arial,sans-serif;font-size:16px;color:#030165;font-weight:normal;">${styledItems}</div>`;
 
                 eventCount.textContent = `Found ${events.length} upcoming voter drive${events.length !== 1 ? 's' : ''}`;
                 output.classList.add('visible');
@@ -846,7 +846,7 @@
 
                 outputText.textContent = blurb;
                 outputText.dataset.plaintext = blurb;
-                outputText.dataset.htmltext = `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;">${blurb}</p>`;
+                outputText.dataset.htmltext = `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;font-weight:normal;">${blurb}</p>`;
 
                 countDiv.textContent = "";
                 output.classList.add('visible');
