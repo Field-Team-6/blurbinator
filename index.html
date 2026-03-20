@@ -767,7 +767,7 @@
                         return {
                             date: timeslot.start_date,
                             text: `${state} (${city}) – ${get('weekday')}, ${get('month')}/${get('day')}${noKings} at ${timeStr}. RSVP HERE.`,
-                            html: `<span style="font-weight:normal">${state} (${city}) – </span><strong>${get('weekday')}, ${get('month')}/${get('day')}</strong><span style="font-weight:normal">${noKings} at </span><strong>${timeStr}</strong><span style="font-weight:normal">. RSVP <a href="${eventUrl}" target="_blank" style="font-weight:normal">HERE</a>.</span>`,
+                            html: `<span style="font-weight:normal">${state} (${city}) – </span><span style="font-weight:bold">${get('weekday')}, ${get('month')}/${get('day')}</span><span style="font-weight:normal">${noKings} at </span><span style="font-weight:bold">${timeStr}</span><span style="font-weight:normal">. RSVP <a href="${eventUrl}" target="_blank" style="font-weight:normal">HERE</a>.</span>`,
                         };
                     })
                     .filter(Boolean)
