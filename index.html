@@ -153,7 +153,7 @@
         /* ── Output areas ── */
         .output-section { margin-top: 32px; display: none; }
         .output-section.visible { display: block; }
-        #voterDriveOutput p { font-family: Arial, sans-serif; font-size: 16px; }
+        #voterDriveOutput p, #voterDriveOutput p * { font-family: Arial, sans-serif !important; font-size: 16px; }
 
         .output-box {
             background: #f7fafc;
@@ -768,7 +768,7 @@
                         return {
                             date: timeslot.start_date,
                             text: `${state} (${city}) – ${get('weekday')}, ${get('month')}/${get('day')}${noKings} at ${timeStr}. RSVP HERE.`,
-                            html: `<span style="font-weight:normal">${state} (${city}) – </span><span style="font-weight:bold">${get('weekday')}, ${get('month')}/${get('day')}</span><span style="font-weight:normal">${noKings} at </span><span style="font-weight:bold">${timeStr}</span><span style="font-weight:normal">. RSVP <a href="${eventUrl}" target="_blank" style="font-weight:normal">HERE</a>.</span>`,
+                            html: `<span style="font-weight:normal">${state} (${city}) – </span><span style="font-weight:bold">${get('weekday')}, ${get('month')}/${get('day')}</span><span style="font-weight:normal">${noKings} at </span><span style="font-weight:bold">${timeStr}</span><span style="font-weight:normal">. RSVP <a href="${eventUrl}" target="_blank" style="font-weight:bold;text-decoration:underline">HERE</a>.</span>`,
                         };
                     })
                     .filter(Boolean)
@@ -782,7 +782,7 @@
                 const styledItems = events.map(e =>
                     `<p style="font-family:Arial,sans-serif;font-size:16px;color:#030165;font-weight:normal;margin:4px 0;">• ${
                         e.html.replace(/<a href="([^"]+)" target="_blank">HERE<\/a>/,
-                        `<a href="$1" style="color:#030165;text-decoration:underline;font-family:Arial,sans-serif;font-size:16px;font-weight:normal;">HERE</a>`)
+                        `<a href="$1" style="color:#030165;text-decoration:underline;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">HERE</a>`)
                     }</p>`
                 ).reduce((acc, item, i) => {
                     acc.push(item);
