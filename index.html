@@ -153,7 +153,7 @@
         /* ── Output areas ── */
         .output-section { margin-top: 32px; display: none; }
         .output-section.visible { display: block; }
-        #voterDriveOutput p, #voterDriveOutput p * { font-family: Arial, sans-serif !important; font-size: 16px; }
+        #outputText p, #outputText p * { font-family: Arial, sans-serif !important; font-size: 16px !important; }
 
         .output-box {
             background: #f7fafc;
@@ -776,7 +776,11 @@
 
                 if (events.length === 0) throw new Error('No qualifying events found after filtering');
 
-                outputText.innerHTML = events.map(e => `<p>• ${e.html}</p>`).join('\n');
+                outputText.innerHTML = events.map(e => `<p>• ${e.html}</p>`).reduce((acc, item, i) => {
+                    acc.push(item);
+                    if ((i + 1) % 5 === 0) acc.push('<p style="margin:0;padding:0;line-height:0.8em;">&nbsp;</p>');
+                    return acc;
+                }, []).join('\n');
                 outputText.dataset.plaintext = events.map(e => `• ${e.text}`).join('\n');
 
                 const styledItems = events.map(e =>
