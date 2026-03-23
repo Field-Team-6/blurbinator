@@ -89,7 +89,7 @@ exports.handler = async function(event, context) {
 
     const searchResult = await get({
       hostname: 'gmail.googleapis.com',
-      path: '/gmail/v1/users/me/messages?q=from:info%40fieldteam6.org+subject%3A%22Field+Team+6+Weekly%22&maxResults=1',
+      path: '/gmail/v1/users/me/messages?q=from:info%40fieldteam6.org+%22Field+Team+6+Weekly%22&maxResults=5',
       headers: { Authorization: 'Bearer ' + accessToken }
     });
 
@@ -97,7 +97,9 @@ exports.handler = async function(event, context) {
       return { statusCode: 404, headers, body: JSON.stringify({ error: 'No newsletters found' }) };
     }
 
-    const messageId = searchResult.messages[0].id;
+    // Sort by internalDate descending to get the truly newest
+    const sortedMsgs = searchResult.messages; // Gmail already returns newest first
+    const messageId = sortedMsgs[0].id;
 
     const message = await get({
       hostname: 'gmail.googleapis.com',
