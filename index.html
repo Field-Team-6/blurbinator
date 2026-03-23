@@ -1802,39 +1802,63 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
 
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Blurbinatin’';
-                                                let aiPrompt = `CRITICAL INSTRUCTION: Your response must begin IMMEDIATELY with "## LAST NEWSLETTER SUMMARY (3/12/26)" — no other text before it. Do not write any introduction, greeting, or preamble of any kind. Do NOT add a separate "LAST NEWSLETTER SUMMARY" heading — the date line IS the heading.
-
-You are helping write the next Field Team 6 Weekly newsletter (going out around March 16, 2026).
-
-LAST NEWSLETTER (Mar 12, 2026):
-
-OPENING: LET'S PUT ON A SHOW — FT6 origin story + $3M fundraising pitch from COO Dale Roy Robinson; 8.3M registrations in, need to pivot and raise more.
+                                                // Fetch latest newsletter from Gmail via Anthropic API + Gmail MCP
+                                                let latestNewsletterText = '';
+                                                let latestNewsletterDate = 'most recent';
+                                                let latestNewsletterSubject = '';
+                                                try {
+                                                    results.innerHTML = '<p style="color:#666;padding:20px">Fetching latest newsletter from Gmail…</p>';
+                                                    const gmailRes = await fetch('https://api.anthropic.com/v1/messages', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({
+                                                            model: 'claude-sonnet-4-20250514',
+                                                            max_tokens: 3000,
+                                                            mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail' }],
+                                                            messages: [{ role: 'user', content: 'Search Gmail for the most recent email from info@fieldteam6.org with subject containing "Field Team 6 Weekly". Return ONLY a JSON object with these fields: { "date": "Month D, YYYY", "subject": "the subject line", "opening": "opening theme title and 1-sentence summary", "bigNews": ["bullet 1", "bullet 2", ...], "events": ["event 1", "event 2", ...], "volOps": "one-line summary", "butWait": ["item 1", "item 2"] }. No other text.' }]
+                                                        })
+                                                    });
+                                                    const gmailData = await gmailRes.json();
+                                                    const gmailText = (gmailData.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+                                                    const jsonMatch = gmailText.match(/\{[\s\S]*\}/);
+                                                    if (jsonMatch) {
+                                                        const nl = JSON.parse(jsonMatch[0]);
+                                                        latestNewsletterDate = nl.date || latestNewsletterDate;
+                                                        latestNewsletterSubject = nl.subject || '';
+                                                        latestNewsletterText = `OPENING: ${nl.opening || ''}
 
 BIG NEWS
-- 3/28 - No Kings III - LETS TURN NO KINGS III INTO 2,400 VOTER DRIVES! (host a voter drive at a protest near you)
-- 1 MILLION NEW RECORDS! (bought 993k new data records for 6-phase plan)
-- BIG THANKS TO OUR RECURRING DONORS AND...! (ActBlue page migration for recurring donors)
+${(nl.bigNews || []).map(b => '- ' + b).join('\n')}
 
-EVENTS - In-person Voter Drives
-- 3/14 - GA (Savannah), PA (Perkasie)
-- 3/18 - CA (Indio)
-- 3/19 - CA (Cypress)
-- 3/21 - PA (Glen Mills)
-- 3/24 - CA (Norwalk)
-- 3/25 - MI (East Lansing), CA (Sacramento)
-- 3/28 (NO KINGS) - GA (Savannah), NV (Henderson), CA (Woodland Hills), CA (Santa Monica), CA (Los Angeles)
-- 4/9 - CA (Palm Desert)
-- 4/21 - CA (Long Beach)
-- 4/28 - MI (Lansing)
-- 5/8-5/9 - CA (Davis)
-Also: Postcard with Miriam (3/13), Social Storm Party w/ BlueVoterGuide (3/18), Midterm Game Plan w/ DNC Chair Ken Martin (3/18), Postcard Party Hard (3/21), Donut fundraiser w/ Donuts+Democracy (4/2)
+EVENTS
+${(nl.events || []).map(e => '- ' + e).join('\n')}
 
 VOL OPS
-In-person drives (CA/GA/MI/NV/PA), postcarding AZ/CO/GA/IA/ME/NC/NE/NJ/NY/PA, texting, social storming (Bluesky/Insta/WhatsApp), PleaseGrowASpine.org
+${nl.volOps || ''}
 
 BUT WAIT
-- NC PRE-PRINTED POSTCARDS NEED YOU!
-- NEW SHIRT, WHO DIS?! (rainbow "I can help you register to vote!" shirt with QR code)
+${(nl.butWait || []).map(b => '- ' + b).join('\n')}`;
+                                                    }
+                                                } catch(gmailErr) {
+                                                    console.warn('Gmail fetch failed, using fallback:', gmailErr);
+                                                    latestNewsletterText = 'Could not fetch latest newsletter — please check Gmail connection.';
+                                                }
+
+                                                // Format date for display (e.g. "3/19/26")
+                                                const nlDateObj = latestNewsletterDate !== 'most recent' ? new Date(latestNewsletterDate) : null;
+                                                const nlDateShort = nlDateObj ? (nlDateObj.getMonth()+1) + '/' + nlDateObj.getDate() + '/' + String(nlDateObj.getFullYear()).slice(2) : 'latest';
+                                                const nlDateFull = latestNewsletterDate;
+                                                // Estimate next newsletter date (following Thursday)
+                                                const today = new Date();
+                                                const daysToThurs = (4 - today.getDay() + 7) % 7 || 7;
+                                                const nextThurs = new Date(today); nextThurs.setDate(today.getDate() + daysToThurs);
+                                                const nextDateStr = nextThurs.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
+
+                                                let aiPrompt = `CRITICAL INSTRUCTION: Your response must begin IMMEDIATELY with "## LAST NEWSLETTER SUMMARY (${nlDateShort})" — no other text before it. Do not write any introduction, greeting, or preamble of any kind. Do NOT add a separate "LAST NEWSLETTER SUMMARY" heading — the date line IS the heading.
+
+You are helping write the next Field Team 6 Weekly newsletter (going out around ${nextDateStr}).
+
+LAST NEWSLETTER (${nlDateFull}):${latestNewsletterText ? '\n\n' + latestNewsletterText : ' (content unavailable)'}
 
 RECENT OPENING THEMES (newest first — do NOT repeat same category two weeks in a row):
 - Mar 12: LET'S PUT ON A SHOW (entertainment metaphor / fundraising pivot story)
@@ -1973,6 +1997,18 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
 
                 // Style ul bullets in the blurbinate output
                 results.querySelectorAll('ul').forEach(ul=>{ul.style.paddingLeft='20px';ul.style.marginLeft='20px';ul.style.listStyleType='disc';ul.style.listStylePosition='outside';});
+                // Style the WARNING disclaimer under OPENING THEME to match bullet list text
+                results.querySelectorAll('p').forEach(p => {
+                    const em = p.querySelector('em');
+                    if (em && em.textContent.includes('WARNING')) {
+                        em.style.fontStyle = 'normal';
+                        p.style.fontSize = '14px';
+                        p.style.color = '#1a1a1a';
+                        p.style.marginTop = '4px';
+                        p.style.marginBottom = '8px';
+                    }
+                });
+
                 // Refresh buttons on THIS WEEK'S NEWS and OPENING THEME headers
                 results.querySelectorAll('h2').forEach(h2 => {
                   const txt = h2.textContent.trim().toUpperCase();
