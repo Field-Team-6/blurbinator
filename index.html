@@ -1609,11 +1609,12 @@ Answer in this exact JSON format (no other text):
 
 RULES TO CHECK:
 1. TYPOS & GRAMMAR: spelling errors, wrong words, clear grammatical mistakes. Do NOT flag voter drive bullet lines (e.g. "GA (SAVANNAH) - Saturday, 3/14 at 9:30a") as incomplete — these are correctly formatted abbreviated event listings, not sentences. Only flag genuine misspellings or wrong words.
-2. PARTY CAPITALIZATION: Flag capitalization errors in political terms — both directions:
-- "democrat" or "democratic" (lowercase) when clearly referring to the Democratic Party or its members must be capitalized: "Democrat" or "Democratic". Example: "register new democratic voters" is wrong, "register new Democratic voters" is correct.
-- "Democracy" (capitalized) when referring to the general concept of democracy (not the party) should be lowercase: "democracy". Example: "feed new voters into the Democracy" is wrong, "feed new voters into the democracy" is correct.
-- Only flag when context makes it clear which meaning is intended. Do NOT flag ambiguous cases.
-3. MISSING APOSTROPHES: Flag contractions missing their apostrophe anywhere in the text (not just headings). Common examples: "LETS" should be "LET'S", "DONT" should be "DON'T", "CANT" should be "CAN'T", "WONT" should be "WON'T", "DIDNT" should be "DIDN'T", "ITS" used as a contraction (meaning "it is") should be "IT'S", "YOURE" should be "YOU'RE", "THEYRE" should be "THEY'RE", "WERE" used as contraction should be "WE'RE", "WOULDNT" should be "WOULDN'T", "COULDNT" should be "COULDN'T". Be careful: "ITS" as a possessive is correct without apostrophe.
+2. PARTY CAPITALIZATION: Only flag these specific errors:
+- "democrat" or "democratic" (lowercase) when CLEARLY referring to a person who is a Democrat or the Democratic Party must be capitalized. Example: "register new democratic voters" ✗ → "register new Democratic voters" ✓.
+- CRITICAL: The word "democracy" (the concept/system of government) is ALWAYS lowercase when used as a common noun. "democracy" ✓, "Democracy" ✗. Do NOT flag "democracy" as a capitalization error — it is never capitalized unless it is part of an ALL-CAPS title or a proper event name like "DONUTS & DEMOCRACY".
+- Do NOT flag if a word appears in an all-caps heading/title — capitalization rules don't apply to all-caps text.
+- Only flag when context makes it unmistakably clear which meaning is intended. Do NOT flag ambiguous cases.
+3. MISSING APOSTROPHES: Flag contractions missing their apostrophe anywhere in the text (not just headings). CRITICAL: Both straight apostrophes (') and curly/smart apostrophes (’) are VALID — do NOT flag a word just because it uses a curly apostrophe. Only flag words that are missing an apostrophe entirely. Common examples of REAL errors: "LETS" (no apostrophe at all) should be "LET'S", "DONT" should be "DON'T", "CANT" should be "CAN'T", "WONT" should be "WON'T", "DIDNT" should be "DIDN'T", "ITS" used as a contraction (meaning "it is") should be "IT'S", "YOURE" should be "YOU'RE", "THEYRE" should be "THEY'RE", "WERE" used as contraction should be "WE'RE", "WOULDNT" should be "WOULDN'T", "COULDNT" should be "COULDN'T". Be careful: "ITS" as a possessive is correct without apostrophe.
 4. PROFANITY: flag any profanity or potentially offensive language (informational — may be intentional)
 5. DOUBLE SPACES: two or more spaces between sentences or words
 6. IN-PERSON HYPHENATION: Be VERY conservative — only flag clear errors. Rules:
