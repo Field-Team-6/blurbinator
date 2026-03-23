@@ -1043,7 +1043,14 @@
                         // contextText exists but couldn't be parsed — likely "at various times" or unusual format
                         const hasCtx = contextText && contextText.trim().length > 10;
                         if (hasCtx) {
-                            result.checks.push({field:'DateTime', icon:'⚠️', listed:'Could not parse time from newsletter text — check manually', actual:dt.full, ok:false});
+                            // Check if context actually looks like an event listing (has a date/time pattern)
+                            const looksLikeEvent = /\bat\s+\d|\d\/\d|January|February|March|April|May|June|July|August|September|October|November|December/i.test(contextText);
+                            if (looksLikeEvent) {
+                                result.checks.push({field:'DateTime', icon:'⚠️', listed:'Could not parse time from newsletter text — check manually', actual:dt.full, ok:false});
+                            } else {
+                                result.checks.push({field:'DateTime', icon:'ℹ️', listed:'Used as general signup link — no event date in newsletter text', actual:dt.full, ok:null});
+                                result.ok = true;
+                            }
                             allOk = false;
                         } else {
                             result.checks.push({field:'DateTime', icon:'ℹ️', listed:'(no newsletter text found to compare)', actual:dt.full, ok:null});
