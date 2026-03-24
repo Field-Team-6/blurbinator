@@ -678,7 +678,6 @@
                 Reads the most recent newsletter, lists its blurb headings, then recommends blurbs and opening theme options for next week — informed by past themes, current news, and the FT6 mission.
             </div>
             
-            <input type="text" id="blurbinateUrl" placeholder="Paste this week's Constant Contact proof URL" style="width:100%;box-sizing:border-box;padding:10px 14px;border-radius:8px;border:2px solid #dce4f0;font-size:15px;margin-bottom:10px;">
             <button class="generate-btn" onclick="runBlurbinate()" id="blurbinateBtn">
                 🗞️ Blurbinate!
             </button>
@@ -1327,6 +1326,7 @@ Answer in this exact JSON format (no other text):
                 const url=document.getElementById('proofUrl').value.trim();
                 const raw='';
                 if (!url&&!raw) throw new Error('Please enter a URL or paste HTML.');
+        if (url) try { localStorage.setItem('ft6_last_proof_url', url); } catch(e){}
 
                 if (url) {
                     // Fetch the proof URL server-side — avoids CORS and bot-blocking
@@ -1797,21 +1797,19 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                       const btn = document.getElementById('blurbinateBtn');
           const results = document.getElementById('blurbinateResults');
 try {
-                // Step 1: Read proof URL from Blurbinate input
-                const blurbUrl = (document.getElementById('blurbinateUrl')?.value || '').trim();
-                if (!blurbUrl) {
-                    results.innerHTML = '<p style="color:#c05000">⚠️ Please paste this week\'s Constant Contact proof URL in the field above, then click Blurbinate again.</p>';
-                    btn.classList.remove('loading'); btn.disabled = false; btn.textContent = '🗞️ Blurbinate!';
-                    return;
-                }
+                // Step 1: Fetch latest newsletter via proof URL saved by Tool 3
+                const savedProofUrl = (() => { try { return localStorage.getItem('ft6_last_proof_url') || ''; } catch(e) { return ''; } })();
+                if (!savedProofUrl) throw new Error('No newsletter saved yet — run Tool 3 (Proof Link Checker) on Thursday with the Constant Contact proof URL and Blurbinate will remember it.');
                 const nlResp = await fetch('/.netlify/functions/fetch-proof', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({url: blurbUrl})
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({url: savedProofUrl})
                 });
                 const nlJson = await nlResp.json();
+                if (!nlJson.html && !nlJson.body) throw new Error('Could not fetch newsletter: ' + (nlJson.error || 'unknown'));
                 const tmpDiv = document.createElement('div');
                 tmpDiv.innerHTML = nlJson.html || nlJson.body || '';
-                tmpDiv.querySelectorAll('script,style,img').forEach(el => el.remove());
+                tmpDiv.querySelectorAll('script,style').forEach(el => el.remove());
                 const NEWSLETTER_BODY = tmpDiv.innerText.replace(/\s+/g, ' ').trim();
                 const NEWSLETTER_DATE = '';
                 const d = new Date();
