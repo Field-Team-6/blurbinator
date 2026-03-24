@@ -1823,53 +1823,6 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
 
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Blurbinatin’';
-                                                // Fetch latest newsletter via fetch-proof + AI summary
-                                                let latestNewsletterText = '';
-                                                let nlDateShort = d.toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric'});;
-                                                let nlDateFull = 'most recent';
-
-                                                // Try to get proof URL from Tool 3 input, or prompt user
-                                                const proofUrlInput = document.querySelector('#proofUrl');
-                                                const proofUrl = proofUrlInput && proofUrlInput.value.trim().includes('constantcontact') ? proofUrlInput.value.trim() : null;
-
-                                                if (proofUrl) {
-                                                    try {
-                                                        results.innerHTML = '<p style="color:#666;padding:20px">Fetching latest newsletter…</p>';
-                                                        const proofRes = await fetch('/.netlify/functions/fetch-proof', {
-                                                            method: 'POST',
-                                                            headers: {'Content-Type': 'application/json'},
-                                                            body: JSON.stringify({url: proofUrl}),
-                                                            signal: AbortSignal.timeout(15000)
-                                                        });
-                                                        if (proofRes.ok) {
-                                                            const proofData = await proofRes.json();
-                                                            const proofHtml = proofData.html || '';
-                                                            if (proofHtml) {
-                                                                // Extract plain text from proof HTML
-                                                                const tmpDoc = new DOMParser().parseFromString(proofHtml, 'text/html');
-                                                                const rawText = tmpDoc.body.innerText.replace(/\s+/g, ' ').trim();
-                                                                // Extract date from newsletter
-                                                                const dateMatch = rawText.match(/(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+20\d\d/);
-                                                                if (dateMatch) {
-                                                                    nlDateFull = dateMatch[0];
-                                                                    const d = new Date(dateMatch[0]);
-                                                                    nlDateShort = (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2);
-                                                                }
-                                                                latestNewsletterText = rawText.substring(0, 4000);
-                                                            }
-                                                        }
-                                                    } catch(e) {
-                                                        console.warn('Proof fetch failed:', e.message);
-                                                    }
-                                                }
-
-                                                if (!latestNewsletterText) {
-                                                    results.innerHTML = '<p style="color:#c00;padding:20px">⚠️ No proof URL found. Please paste the Constant Contact proof URL into the Proof Link Checker field above, then click Blurbinate again.</p>';
-                                                    btn.classList.remove('loading'); btn.disabled = false; btn.textContent = '💡 Blurbinate!';
-                                                    return;
-                                                }
-
-                                                const today = new Date();
                                                 const daysToThurs = (4 - today.getDay() + 7) % 7 || 7;
                                                 const nextThurs = new Date(today); nextThurs.setDate(today.getDate() + daysToThurs);
                                                 const nextDateStr = nextThurs.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
@@ -1880,7 +1833,7 @@ You are helping write the next Field Team 6 Weekly newsletter (going out around 
 
 LAST NEWSLETTER (${nlDateFull}) — full plain text below. Use ONLY this text for the summary. Do NOT invent or add anything not present in this text.
 
-${latestNewsletterText}
+${NEWSLETTER_BODY}
 
 For the summary section, extract and list ALL blurb headings with their title in bold and a one-sentence description. Include every named section: OPENING, BIG NEWS (each item), EVENTS (each named event), VOL OPS, BUT WAIT (each item). Format like:
 - **TITLE OF BLURB** — one sentence describing it
