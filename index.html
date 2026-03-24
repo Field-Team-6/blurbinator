@@ -1877,7 +1877,7 @@ BIG NEWS
 - [date if applicable] - [blurb title]
 
 EVENTS
-- In-person Voter Drives ([date range])
+- **In-person Voter Drives** ([date range])
 - [exact blurb title as written in newsletter] ([date])
 - [exact blurb title as written in newsletter] ([date])
 (Use the EXACT title from each newsletter event blurb heading — do not paraphrase. Include named events only: postcard parties, social storms, fundraisers, trainings, text arcades — NOT individual voter drive city locations.)
@@ -1894,7 +1894,7 @@ BUT WAIT
 
 
 
-## OPENING THEME IDEAS FOR NEXT NEWSLETTER
+## OPENING THEME IDEAS
 Give exactly 4 options. Each = ALL-CAPS title + one sentence on the hook/category. No favorite. No draft. No CTA.
 
 ## THIS WEEK'S NEWS
@@ -1953,6 +1953,18 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                         ${cleanHtml}
                     </div>
                 `;
+                clearInterval(_dotInterval); btn.textContent = '💬 Blurbinate!';
+                // Strip any content under VOL OPS heading
+                results.querySelectorAll('h2').forEach(h2 => {
+                  if (h2.textContent.trim().toUpperCase() === 'VOL OPS') {
+                    let next = h2.nextElementSibling;
+                    while (next && next.tagName !== 'H2') {
+                      const toRemove = next;
+                      next = next.nextElementSibling;
+                      toRemove.remove();
+                    }
+                  }
+                });
                 // Insert BRAINSTORM banner + blue bg after BUT WAIT section
                 const allH2s = results.querySelectorAll('h2');
                 let butWaitH2 = null;
@@ -2023,7 +2035,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
             } catch(err) {
                 results.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
             } finally {
-                clearInterval(_dotInterval); btn.textContent = '💬 Blurbinate!'; btn.disabled = false; btn.classList.remove('loading'); btn.textContent = '\uD83D\uDDE8\uFE0F Blurbinate!';
+                btn.disabled = false; btn.classList.remove('loading');
             }
         }
 
