@@ -1802,44 +1802,67 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
 
                 // Step 4: Call AI with newsletter text + history + news search request
                 btn.classList.add('loading'); btn.disabled = true; btn.textContent = 'Blurbinatin’';
-                                                // Fetch latest newsletter from Gmail via Netlify function
-                                                document.getElementById('blurbinateResults').innerHTML = '<p style="color:#555">Fetching latest newsletter from Gmail…</p>';
-                                                const nlResp = await fetch('/.netlify/functions/get-latest-newsletter');
-                                                if (!nlResp.ok) throw new Error('Failed to fetch newsletter: ' + nlResp.status);
-                                                const nlData = await nlResp.json();
-                                                if (nlData.error) throw new Error('Newsletter fetch error: ' + nlData.error);
+                                                // Fetch latest newsletter via fetch-proof + AI summary
+                                                let latestNewsletterText = '';
+                                                let nlDateShort = 'latest';
+                                                let nlDateFull = 'most recent';
 
-                                                // Strip HTML tags from body for plain-text AI prompt
-                                                const tmpDiv = document.createElement('div');
-                                                tmpDiv.innerHTML = nlData.body || '';
-                                                const NEWSLETTER_BODY = tmpDiv.innerText.trim();
-                                                const NEWSLETTER_DATE = nlData.date
-                                                  ? new Date(nlData.date).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})
-                                                  : '(unknown date)';
+                                                // Try to get proof URL from Tool 3 input, or prompt user
+                                                const proofUrlInput = document.querySelector('#proofUrl');
+                                                const proofUrl = proofUrlInput && proofUrlInput.value.trim().includes('constantcontact') ? proofUrlInput.value.trim() : null;
 
-                                                const d = new Date(nlData.date || Date.now());
-                                                const nlDateShort = (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2);
+                                                if (proofUrl) {
+                                                    try {
+                                                        results.innerHTML = '<p style="color:#666;padding:20px">Fetching latest newsletter…</p>';
+                                                        const proofRes = await fetch('/.netlify/functions/fetch-proof', {
+                                                            method: 'POST',
+                                                            headers: {'Content-Type': 'application/json'},
+                                                            body: JSON.stringify({url: proofUrl}),
+                                                            signal: AbortSignal.timeout(15000)
+                                                        });
+                                                        if (proofRes.ok) {
+                                                            const proofData = await proofRes.json();
+                                                            const proofHtml = proofData.html || '';
+                                                            if (proofHtml) {
+                                                                // Extract plain text from proof HTML
+                                                                const tmpDoc = new DOMParser().parseFromString(proofHtml, 'text/html');
+                                                                const rawText = tmpDoc.body.innerText.replace(/\s+/g, ' ').trim();
+                                                                // Extract date from newsletter
+                                                                const dateMatch = rawText.match(/(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+20\d\d/);
+                                                                if (dateMatch) {
+                                                                    nlDateFull = dateMatch[0];
+                                                                    const d = new Date(dateMatch[0]);
+                                                                    nlDateShort = (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2);
+                                                                }
+                                                                latestNewsletterText = rawText.substring(0, 4000);
+                                                            }
+                                                        }
+                                                    } catch(e) {
+                                                        console.warn('Proof fetch failed:', e.message);
+                                                    }
+                                                }
+
+                                                if (!latestNewsletterText) {
+                                                    results.innerHTML = '<p style="color:#c00;padding:20px">⚠️ No proof URL found. Please paste the Constant Contact proof URL into the Proof Link Checker field above, then click Blurbinate again.</p>';
+                                                    btn.classList.remove('loading'); btn.disabled = false; btn.textContent = '💡 Blurbinate!';
+                                                    return;
+                                                }
+
                                                 const today = new Date();
                                                 const daysToThurs = (4 - today.getDay() + 7) % 7 || 7;
                                                 const nextThurs = new Date(today); nextThurs.setDate(today.getDate() + daysToThurs);
                                                 const nextDateStr = nextThurs.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
 
-                                                let aiPrompt = `CRITICAL INSTRUCTION: Your response must begin IMMEDIATELY with "## LAST NEWSLETTER SUMMARY (${nlDateShort})" — no other text before it.
+                                                let aiPrompt = `CRITICAL INSTRUCTION: Your response must begin IMMEDIATELY with "## LAST NEWSLETTER SUMMARY (${nlDateShort})" — no other text before it. Do not write any introduction, greeting, or preamble of any kind.
 
 You are helping write the next Field Team 6 Weekly newsletter (going out around ${nextDateStr}).
 
-LAST NEWSLETTER (${NEWSLETTER_DATE}):
+LAST NEWSLETTER (${nlDateFull}) — full plain text below. Use ONLY this text for the summary. Do NOT invent or add anything not present in this text.
 
-${NEWSLETTER_BODY}
+${latestNewsletterText}
 
-For the ## LAST NEWSLETTER SUMMARY section, list every named section with its EXACT TITLE in bold and a one-sentence description. Format:
-- **OPENING: [EXACT TITLE]** — one sentence
-- **BIG NEWS: [EXACT TITLE]** — one sentence (one line per item)
-- **EVENTS: [EXACT TITLE]** — one sentence (one line per named event)
-- **VOL OPS** — one sentence
-- **BUT WAIT: [EXACT TITLE]** — one sentence (one line per item)
-
-Use ONLY the content above. Do NOT invent, add, or speculate about anything not in the newsletter text.
+For the summary section, extract and list ALL blurb headings with their title in bold and a one-sentence description. Include every named section: OPENING, BIG NEWS (each item), EVENTS (each named event), VOL OPS, BUT WAIT (each item). Format like:
+- **TITLE OF BLURB** — one sentence describing it
 
 RECENT OPENING THEMES (newest first — do NOT repeat same category two weeks in a row):
 - Mar 12: LET'S PUT ON A SHOW (entertainment metaphor / fundraising pivot story)
@@ -1978,12 +2001,15 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
 
                 // Style ul bullets in the blurbinate output
                 results.querySelectorAll('ul').forEach(ul=>{ul.style.paddingLeft='20px';ul.style.marginLeft='20px';ul.style.listStyleType='disc';ul.style.listStylePosition='outside';});
-                // Fix WARNING disclaimer styling — strip italic em wrapper, keep as plain text
-                results.querySelectorAll('p').forEach(p => {
-                    const em = p.querySelector('em');
-                    if (em && em.textContent.includes('WARNING') && em.textContent.includes('bizarre')) {
-                        p.innerHTML = em.textContent;
-                        p.removeAttribute('style');
+                // Style the WARNING disclaimer to exactly match the bullet list items below it
+                results.querySelectorAll('p, em, i').forEach(el => {
+                    const txt = el.textContent || '';
+                    if (txt.includes('WARNING') && txt.includes('bizarre')) {
+                        const parent = el.closest('p') || el;
+                        parent.style.cssText = 'font-family:inherit;font-size:inherit;font-weight:inherit;font-style:normal;color:inherit;margin:0 0 8px 0;padding:0;';
+                        if (el.tagName === 'EM' || el.tagName === 'I') {
+                            el.style.fontStyle = 'normal';
+                        }
                     }
                 });
 
