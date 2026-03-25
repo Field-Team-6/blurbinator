@@ -1868,7 +1868,7 @@ LET'S PUT ON A SHOW (Mar 2026), CUT TRUMP'S TERM IN HALF (Feb 2026), THE RIGHT P
                                                 const nextThurs = new Date(today); nextThurs.setDate(today.getDate() + daysToThurs);
                                                 const nextDateStr = nextThurs.toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'});
 
-                                                let aiPrompt = `CRITICAL INSTRUCTION: Your response must begin IMMEDIATELY with "## LAST NEWSLETTER SUMMARY (${nlDateShort}) [USE THIS DATE EXACTLY — do not use the date from inside the newsletter]" — no other text before it. Do not write any introduction, greeting, or preamble of any kind.
+                                                let aiPrompt = `CRITICAL INSTRUCTION: Output ONLY the structured sections below. Do NOT write any thinking, searching, preamble, or intro text of any kind — not even one sentence. Your response must begin IMMEDIATELY with "## LAST NEWSLETTER SUMMARY (${nlDateShort}) [USE THIS DATE EXACTLY — do not use the date from inside the newsletter]" — no other text before it. Do not write any introduction, greeting, or preamble of any kind.
 
 You are helping write the next Field Team 6 Weekly newsletter (going out around ${nextDateStr}).
 
@@ -1876,8 +1876,10 @@ LAST NEWSLETTER (${nlDateShort}) — full plain text below. Use ONLY this text f
 
 ${NEWSLETTER_BODY}
 
-For the summary section, extract and list ALL blurb headings with their title in bold and a one-sentence description. Include every named section: OPENING, BIG NEWS (each item), EVENTS (each named event), VOL OPS, BUT WAIT (each item). Format like:
-- **TITLE OF BLURB** — one sentence describing it
+For the summary section, list ALL blurb headings. Include: OPENING, BIG NEWS (each item), EVENTS (each event), VOL OPS, BUT WAIT (each item). Format EXACTLY as a plain bullet list — ALL CAPS, no bold, no descriptions, exact title only:
+- TITLE OF BLURB
+
+CRITICAL: No bold. No descriptions. No extra text. Just the exact titles as bullet points.
 
 RECENT OPENING THEMES (newest first — do NOT repeat same category two weeks in a row):
 - Mar 12: LET'S PUT ON A SHOW (entertainment metaphor / fundraising pivot story)
@@ -2079,19 +2081,25 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
             } catch(err) {
                 results.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
             
-                // Add refresh buttons next to OPENING THEME IDEAS and THIS WEEK'S NEWS
-                results.querySelectorAll('h2').forEach(function(h2) {
-                  var txt = h2.textContent.trim();
-                  if (txt.indexOf('OPENING THEME') >= 0 || txt.indexOf('THIS WEEK') >= 0) {
-                    var rb = document.createElement('button');
-                    rb.title = 'Regenerate this section';
-                    rb.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a3a6b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>';
-                    rb.style.cssText = 'margin-left:8px;background:#ebf0ff;border:1px solid #b8c4e0;cursor:pointer;vertical-align:middle;padding:3px;border-radius:50%;line-height:0';
-                    var sectionName = txt.indexOf('OPENING THEME') >= 0 ? 'themes' : 'news';
-                    rb.onclick = (function(sn, h, r) { return function() { runBlurbinateSection(sn, h, r); }; })(sectionName, h2, rb);
-                    h2.appendChild(rb);
-                  }
-                });
+                // Add refresh buttons after DOM settles
+                setTimeout(function() {
+                  var res = document.getElementById('blurbinateResults');
+                  if (!res) return;
+                  res.querySelectorAll('h2').forEach(function(h2) {
+                    var txt = h2.textContent.trim();
+                    if (txt.indexOf('OPENING THEME') >= 0 || txt.indexOf('THIS WEEK') >= 0) {
+                      var rb = document.createElement('button');
+                      rb.title = 'Regenerate this section';
+                      rb.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>';
+                      rb.style.cssText = 'margin-left:8px;background:#ebf0ff;border:1px solid #b8c4e0;cursor:pointer;vertical-align:middle;padding:3px;border-radius:50%;line-height:0;display:inline-block';
+                      rb.onmouseenter = function() { rb.style.background = '#d0d8f0'; };
+                      rb.onmouseleave = function() { rb.style.background = '#ebf0ff'; };
+                      var sn = txt.indexOf('OPENING THEME') >= 0 ? 'themes' : 'news';
+                      rb.onclick = (function(s, h, r) { return function() { runBlurbinateSection(s, h, r); }; })(sn, h2, rb);
+                      h2.appendChild(rb);
+                    }
+                  });
+                }, 0);
 } finally {
                 btn.disabled = false; btn.classList.remove('loading');
             }
