@@ -2080,7 +2080,8 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
 
             } catch(err) {
                 results.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
-            
+            } finally {
+                btn.disabled = false; btn.classList.remove('loading');
                 // Add refresh buttons after DOM settles
                 setTimeout(function() {
                   var res = document.getElementById('blurbinateResults');
@@ -2100,8 +2101,6 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                     }
                   });
                 }, 0);
-} finally {
-                btn.disabled = false; btn.classList.remove('loading');
             }
         }
 
