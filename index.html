@@ -1194,9 +1194,8 @@ Answer in this exact JSON format (no other text):
 
             try {
                 results.innerHTML = '<p style="color:#666;padding:12px 0;font-style:italic">🤖 Asking AI… (this takes ~15s)</p>';
-                const aiRes = window._blurbDC = 0; window._blurbDI = setInterval(() => { window._blurbDC = (window._blurbDC % 3) + 1; btn.textContent = 'Blurbinatin’' + '.'.repeat(window._blurbDC); }, 300);
-                results.innerHTML = '<p style="color:#666;padding:12px 0;font-style:italic">🤖 Asking AI… (~15s)</p>';
-                const aiRes = await fetch('/.netlify/functions/ai-check'    method: 'POST',
+                const aiRes = await fetch('/.netlify/functions/ai-check', {
+                    method: 'POST',
                     headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({prompt: aiPrompt}),
                     signal: AbortSignal.timeout(20000)
@@ -1803,6 +1802,7 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                       const btn = document.getElementById('blurbinateBtn');
           const results = document.getElementById('blurbinateResults');
           btn.disabled = true;
+          results.innerHTML = '<p style="color:#666;padding:12px 0;font-style:italic">🤖 Asking AI… (this takes ~15s)</p>';
           results.innerHTML = '<p style="color:#666;padding:12px 0;font-style:italic">📡 Fetching newsletter…</p>';
 try {
                 // Step 1: Fetch latest newsletter via proof URL saved by Tool 3
@@ -1957,11 +1957,12 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                         ${cleanHtml}
                     </div>
                 `;
-                requestAnimationFrame(() => { if (window._blurbDI) { clearInterval(window._blurbDI); window._blurbDI = null; } btn.textContent = '💬 Blurbinate!'; });
-                // Strip spurious AI preamble (everything before first h2)
+                requestAnimationFrame(() => { clearInterval(_dotInterval); btn.textContent = '💬 Blurbinate!'; });
+                // Strip spurious AI preamble (any <p> before first <h2>)
                 const firstH2 = results.querySelector('h2');
                 if (firstH2) {
-                  Array.from(results.childNodes).forEach(n => { if (!firstH2.contains(n) && n !== firstH2) n.remove(); });
+                  let prev = firstH2.previousElementSibling;
+                  while (prev) { const toRm = prev; prev = prev.previousElementSibling; toRm.remove(); }
                 }
                 // Strip any content under VOL OPS heading
                 results.querySelectorAll('h2').forEach(h2 => {
@@ -2019,7 +2020,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                   if (!rType) return;
                   const rb = document.createElement('button');
                   rb.title = 'Refresh';
-                  rb.style.cssText = 'margin-left:8px;background:#ebf0ff;border:1px solid #b8c4e0;cursor:pointer;vertical-align:middle;padding:3px;border-radius:50%;';
+                  rb.style.cssText = 'margin-left:10px;background:none;border:none;cursor:pointer;vertical-align:middle;padding:2px;border-radius:50%;transition:background 0.2s;line-height:0';
                   rb.innerHTML = '<svg id="rb-svg-'+Math.random().toString(36).slice(2)+'" width="16" height="16" viewBox="0 0 24 24" fill="#1a3a6b" xmlns="http://www.w3.org/2000/svg"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
                   rb.onmouseenter=()=>rb.style.background='rgba(26,58,107,0.1)';
                   rb.onmouseleave=()=>rb.style.background='none';
