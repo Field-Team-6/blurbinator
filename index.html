@@ -1822,7 +1822,7 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
             toRemove.forEach(function(n) { n.remove(); });
             // Insert new content after h2
             var tmp = document.createElement('div');
-            tmp.innerHTML = newText.split('\n').filter(function(l){return l.trim() && (l.indexOf('--') !== -1 || l.indexOf('—') !== -1 || l.indexOf('–') !== -1);}).map(function(l){return l.replace(/^(.+?)\s*(--|—|–)\s*/,'<strong>$1</strong> — ');}).map(function(l){return '<p style="margin:0.5em 0">' + l + '</p>';}).join('');
+            if (isThemes) { tmp.innerHTML = newText.split('\n').filter(function(l){return l.trim() && (l.indexOf('--') !== -1 || l.indexOf('—') !== -1 || l.indexOf('–') !== -1);}).map(function(l){return l.replace(/^(.+?)\s*(--|\u2014|\u2013)\s*/,'<strong>$1</strong> \u2014 ');}).map(function(l){return '<p style="margin:0.5em 0">' + l + '</p>';}).join(''); } else { tmp.innerHTML = newText; }
             tmp.querySelectorAll('a').forEach(function(a){a.setAttribute('target','_blank');});
             var ref = h2El;
             while (tmp.firstChild) {
