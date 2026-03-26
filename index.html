@@ -1804,12 +1804,12 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
           try {
             var isThemes = sectionName === 'themes';
             var prompt = isThemes
-              ? 'Give me 4 fresh opening theme ideas for the Field Team 6 newsletter next week. Return ONLY 4 lines, each: THEME TITLE (ALL CAPS, 3-6 words) — one sentence description. No intro, no numbering, no markdown.'
+              ? 'You are a creative writer for Field Team 6 (FT6), a grassroots organization that registers Democratic voters in swing states. FT6 has registered 8.3 million voters. Their motto: Register Democrats. Save the world. They use humor, humanity, and urgency. Current priorities: 2026 midterm elections, No Kings protests and voter drives, $3M fundraising goal, 3 million new votes.\n\nRecent newsletter themes to AVOID repeating:\n- LETS PUT ON A SHOW (Mar 2026)\n- CUT TRUMPS TERM IN HALF (Feb 2026)\n- THE RIGHT PEOPLE (Feb 2026)\n- EMERGENCY PROTOCOLS (Jan 2026)\n- THERE IS NOW A PATH TO THE SENATE (Jan 2026)\n- LOVE AND A PLAN (Jan 2026)\n- TWO HOT DOGS EXTRA ONIONS AND MUSTARD (Dec 2025)\n- REDISCOVER LOVE (Dec 2025)\n\nVoice and style rules for themes:\n- ALL CAPS, punchy, 2-6 words\n- Mix urgency + humor + humanity -- never just doom\n- Pop culture, movie, music, sports references welcome\n- Historical echoes (civil rights, past victories) welcome\n- Self-deprecating humor welcome\n- Direct address to reader welcome\n- No violence or cheating themes\n- Rotate categories: news hook, self-care, historical inspiration, pop culture riff, direct urgency, FT6 milestone, philosophical, humor-first\n- Do NOT repeat a category used in the last 2 weeks\n\nGive me 4 fresh opening theme ideas for the Field Team 6 newsletter next week. Return ONLY 4 lines, each: THEME TITLE (ALL CAPS, 3-6 words) -- one sentence description. No intro, no numbering, no markdown.'
               : 'Search for the latest voter registration, voter suppression, and election news from the past week. Return ONLY a bullet list of 4-6 items in this format: <li><strong>Headline</strong> — one sentence summary (<a href="URL">Source</a>, Date)</li>. No intro text.';
             var aiRes = await fetch('/.netlify/functions/ai-check', {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({prompt: prompt, model: 'claude-haiku-4-5-20251001', max_tokens: 800}),
+              body: JSON.stringify({prompt: prompt, model: 'claude-sonnet-4-20250514', max_tokens: 800}),
               signal: AbortSignal.timeout(30000)
             });
             var aiData = await aiRes.json();
