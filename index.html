@@ -1198,6 +1198,32 @@
                     pageText = (title + '\n' + body).replace(/\s+/g,' ').trim().substring(0,2500);
                 } catch(e) { pageText = ''; }
             }
+            // If we couldn't read the page, try the platform's oEmbed API for ground truth
+            // (Spotify and YouTube both expose exact-URL metadata with no bot-blocking)
+            let viaOembed = false;
+            if (!pageText || pageText.length < 50) {
+                let oeUrl = null;
+                if (/^https?:\/\/open\.spotify\.com\//i.test(href)) oeUrl = 'https://open.spotify.com/oembed?url=' + encodeURIComponent(href);
+                else if (/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(href)) oeUrl = 'https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(href);
+                if (oeUrl) {
+                    try {
+                        const oeRes = await fetch('/.netlify/functions/fetch-proof', {
+                            method: 'POST',
+                            headers: {'Content-Type':'application/json'},
+                            body: JSON.stringify({url: oeUrl}),
+                            signal: AbortSignal.timeout(15000)
+                        });
+                        const oeData = await oeRes.json();
+                        if (oeData.fetchedStatus === 200 && oeData.html) {
+                            const oj = JSON.parse(oeData.html);
+                            if (oj && (oj.title || oj.author_name)) {
+                                pageText = 'OFFICIAL PLATFORM METADATA for this exact URL (via oEmbed API - authoritative): title: ' + (oj.title||'') + (oj.author_name ? ' | author/channel: ' + oj.author_name : '') + (oj.provider_name ? ' | platform: ' + oj.provider_name : '');
+                                viaOembed = true;
+                            }
+                        }
+                    } catch(e) {}
+                }
+            }
             const noContent = !pageText || pageText.length < 50;
 
             // Build AI prompt
@@ -1209,6 +1235,7 @@
                     'LINK TEXT: "' + linkText + '"\n' +
                     'LINK URL: ' + href + '\n\n' +
                     'The page could not be fetched automatically (the site blocks bots or returned no readable content). Use web search to find out what this URL / site / page is, and judge whether it plausibly matches the newsletter context. Recognizable trusted destinations (e.g. official org sites, ActBlue donation pages, Zoom registration, Google Docs, YouTube, social media profiles) whose URL and link text match the context can be judged correct. If you truly cannot determine what the page is, answer with "unknown".\n\n' +
+                    'CRITICAL: Many URLs contain opaque IDs (e.g. Spotify show IDs, shortened links) whose exact destination CANNOT be confirmed by search. Only answer false if search results specifically tie THIS EXACT URL to different content. Finding a similarly-named show, page, or organization in search results is NOT evidence of a wrong destination - similarly-named things commonly coexist. When in doubt, answer "unknown", never false.\n\n' +
                     'After any searching, end your response with EXACTLY this JSON format on its own line (no markdown fences):\n' +
                     '{"correct": true/false/"unknown", "confidence": "high"/"medium"/"low", "reason": "one sentence explanation"}';
             } else {
@@ -1259,10 +1286,14 @@
                     result.aiReason = verdict.reason;
                     result.aiConfidence = verdict.confidence;
                 } else {
-                    result.status = verdict.confidence==='high' ? 'fail' : 'warn';
-                    result.icon = verdict.confidence==='high' ? '❌' : '⚠️';
-                    result.message = 'AI: Wrong destination — ' + verdict.reason;
-                    result.checks.push({field:'AI Check', icon:'❌', listed:newsletterCtx.substring(0,80), actual:verdict.reason, ok:false});
+                    // A "wrong" verdict based only on web search (page unread, no oEmbed
+                    // ground truth) is indirect evidence — cap it at a warning, never a hard fail.
+                    const indirect = noContent && !viaOembed;
+                    const hardFail = verdict.confidence==='high' && !indirect;
+                    result.status = hardFail ? 'fail' : 'warn';
+                    result.icon = hardFail ? '❌' : '⚠️';
+                    result.message = (indirect ? 'AI (web search only) suspects mismatch — verify: ' : 'AI: Wrong destination — ') + verdict.reason;
+                    result.checks.push({field:'AI Check', icon: hardFail ? '❌' : '⚠️', listed:newsletterCtx.substring(0,80), actual:verdict.reason, ok:false});
                 }
             } catch(e) {
                 // AI call failed — fall back to reachability, still show remember button
