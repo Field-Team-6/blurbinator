@@ -925,17 +925,17 @@
         function lcParseListedEvent(ctx) {
             if (!ctx) return null;
             // m1: STATE (CITY) – Weekday, M/D (optional paren) at TIME  [numeric month]
-            const m1 = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(\d+)\/(\d+)(?:\s*\([^)]*\))?\s*at\s*(\d+(?::\d+)?)\s*([aApP][mM]?)/);
-            if (m1) return { state:m1[1], city:m1[2].toUpperCase(), weekday:m1[3], month:m1[4], day:m1[5], timeRaw:m1[6]+m1[7].toLowerCase() };
+            const m1 = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(\d+)\/(\d+)(?:\s*\([^)]*\))?\s*at\s*(\d+(?::\d+)?)\s*([aApP][mM]?)(?:\.?[mM]?\.?\s*(PT|PST|PDT|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT)\b)?/);
+            if (m1) return { state:m1[1], city:m1[2].toUpperCase(), weekday:m1[3], month:m1[4], day:m1[5], timeRaw:m1[6]+m1[7].toLowerCase(), tzRaw:m1[8]||null };
             // m1w: STATE (CITY) – Weekday, Month D (optional paren) at TIME  [word month — e.g. March 28 (NO KINGS)]
-            const m1w = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(January|February|March|April|May|June|July|August|September|October|November|December)\s*(\d+)(?:\s*\([^)]*\))?\s*at\s*(\d+(?::\d+)?)\s*([aApP][mM]?)/i);
-            if (m1w) { const MONTHS={january:'1',february:'2',march:'3',april:'4',may:'5',june:'6',july:'7',august:'8',september:'9',october:'10',november:'11',december:'12'}; return { state:m1w[1], city:m1w[2].toUpperCase(), weekday:m1w[3], month:MONTHS[m1w[4].toLowerCase()]||m1w[4], day:m1w[5], timeRaw:m1w[6]+m1w[7].toLowerCase() }; }
+            const m1w = ctx.match(/([A-Z]{2})\s*\(([^)]+)\)\s*[–\-]\s*(\w+),\s*(January|February|March|April|May|June|July|August|September|October|November|December)\s*(\d+)(?:\s*\([^)]*\))?\s*at\s*(\d+(?::\d+)?)\s*([aApP][mM]?)(?:\.?[mM]?\.?\s*(PT|PST|PDT|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT)\b)?/i);
+            if (m1w) { const MONTHS={january:'1',february:'2',march:'3',april:'4',may:'5',june:'6',july:'7',august:'8',september:'9',october:'10',november:'11',december:'12'}; return { state:m1w[1], city:m1w[2].toUpperCase(), weekday:m1w[3], month:MONTHS[m1w[4].toLowerCase()]||m1w[4], day:m1w[5], timeRaw:m1w[6]+m1w[7].toLowerCase(), tzRaw:m1w[8]||null }; }
             const MONTHS = {january:'1',february:'2',march:'3',april:'4',may:'5',june:'6',july:'7',august:'8',september:'9',october:'10',november:'11',december:'12'};
-            const m2 = ctx.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*(?:(\d+)\/(\d+)|(January|February|March|April|May|June|July|August|September|October|November|December)\s*(\d+))(?:\s*\([^)]*\))?\s*at\s*(\d+(?::\d+)?)\s*([aApP][mM]?)/i);
+            const m2 = ctx.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s*(?:(\d+)\/(\d+)|(January|February|March|April|May|June|July|August|September|October|November|December)\s*(\d+))(?:\s*\([^)]*\))?\s*at\s*(\d+(?::\d+)?)\s*([aApP][mM]?)(?:\.?[mM]?\.?\s*(PT|PST|PDT|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT)\b)?/i);
             if (m2) {
                 let month = m2[2], day = m2[3];
                 if (!month && m2[4]) { month = MONTHS[m2[4].toLowerCase()] || m2[4]; day = m2[5]; }
-                return { state:null, city:null, weekday:m2[1], month, day, timeRaw:m2[6]+m2[7].toLowerCase() };
+                return { state:null, city:null, weekday:m2[1], month, day, timeRaw:m2[6]+m2[7].toLowerCase(), tzRaw:m2[8]||null };
             }
             return null;
         }
@@ -946,6 +946,15 @@
             const ampm = m[3].toLowerCase()==='p'?'PM':'AM';
             const min = m[2] ? parseInt(m[2],10) : 0;
             return min===0 ? parseInt(m[1],10)+' '+ampm : parseInt(m[1],10)+':'+(min+'').padStart(2,'0')+' '+ampm;
+        }
+        function lcTzToIana(abbr) {
+            if (!abbr) return null;
+            const a = abbr.toUpperCase().charAt(0);
+            if (a === 'P') return 'America/Los_Angeles';
+            if (a === 'E') return 'America/New_York';
+            if (a === 'C') return 'America/Chicago';
+            if (a === 'M') return 'America/Denver';
+            return null;
         }
 
         function lcClassify(href) {
@@ -1031,8 +1040,20 @@
                         result.checks.push({field:'Date', icon:dOk?'✅':'❌', listed:listed.month+'/'+listed.day, actual:dt.month+'/'+dt.day, ok:dOk});
                         if(!dOk) allOk=false;
                         const normT = lcNormTime(listed.timeRaw);
-                        const tOk = normT===dt.time;
-                        result.checks.push({field:'Time', icon:tOk?'✅':'❌', listed:normT, actual:dt.time+' '+dt.tz, ok:tOk});
+                        let tOk = normT===dt.time;
+                        let tListed = normT + (listed.tzRaw ? ' ' + listed.tzRaw.toUpperCase() : '');
+                        let tActual = dt.time+' '+dt.tz;
+                        if (!tOk && listed.tzRaw) {
+                            // Newsletter lists a timezone (PT/ET/CT/MT) — convert the event time
+                            // into that timezone before comparing, so 4:30 PM PT matches 6:30 PM CDT.
+                            const iana = lcTzToIana(listed.tzRaw);
+                            if (iana) {
+                                const dtZ = lcFormatDT(slot.start_date, iana);
+                                if (normT === dtZ.time) { tOk = true; tActual = dtZ.time+' '+dtZ.tz+' (= '+dt.time+' '+dt.tz+' event-local)'; }
+                                else { tActual = dtZ.time+' '+dtZ.tz+' (= '+dt.time+' '+dt.tz+' event-local)'; }
+                            }
+                        }
+                        result.checks.push({field:'Time', icon:tOk?'✅':'❌', listed:tListed, actual:tActual, ok:tOk});
                         if(!tOk) allOk=false;
                         const loc = ev.location;
                         if (listed.state && listed.state && loc&&loc.locality&&loc.region) {
@@ -1152,72 +1173,79 @@
                 finalUrl = chkData.finalUrl || href;
                 pageHtml = chkData.html || '';
             } catch(e) {
-                result.status='warn'; result.icon='⚠️'; result.message='Could not fetch — check manually';
-                return result;
+                fetchStatus = 0; pageHtml = '';
             }
 
             if (fetchStatus === 404) {
                 result.status='fail'; result.icon='❌'; result.message='404 Not Found';
                 return result;
             }
-            if (fetchStatus >= 500) {
-                result.status='warn'; result.icon='⚠️'; result.message='Server error '+fetchStatus+' — check manually';
-                return result;
-            }
 
-            // Bot-blocked (403/401/0 with no useful HTML) — can't read content
-            const isBlocked = (fetchStatus===403||fetchStatus===401||(fetchStatus===0&&pageHtml.length<500));
-            if (isBlocked) {
-                result.status='warn'; result.icon='⚠️'; result.message='Site blocks automated reading — check manually';
-                return result;
-            }
+            // Bot-blocked / server error / unfetchable — don't give up, let the AI
+            // verify the link itself via web search below.
+            const isBlocked = (fetchStatus>=500||fetchStatus===403||fetchStatus===401||(fetchStatus===0&&pageHtml.length<500));
 
-            // Extract readable text from fetched HTML (title + body text, capped at 2000 chars)
+            // Extract readable text from fetched HTML (title + body text, capped)
             let pageText = '';
-            try {
-                const pd = new DOMParser().parseFromString(pageHtml, 'text/html');
-                const title = pd.title || '';
-                // Remove scripts/styles
-                pd.querySelectorAll('script,style,nav,footer,header').forEach(el=>el.remove());
-                const body = (pd.body||pd.documentElement).innerText||pd.body.textContent||'';
-                pageText = (title + '\n' + body).replace(/\s+/g,' ').trim().substring(0,2500);
-            } catch(e) { pageText = ''; }
-
-            if (!pageText || pageText.length < 50) {
-                result.status='warn'; result.icon='⚠️'; result.message='Could not read page content — check manually';
-                return result;
+            if (!isBlocked) {
+                try {
+                    const pd = new DOMParser().parseFromString(pageHtml, 'text/html');
+                    const title = pd.title || '';
+                    // Remove scripts/styles
+                    pd.querySelectorAll('script,style,nav,footer,header').forEach(el=>el.remove());
+                    const body = (pd.body||pd.documentElement).innerText||pd.body.textContent||'';
+                    pageText = (title + '\n' + body).replace(/\s+/g,' ').trim().substring(0,2500);
+                } catch(e) { pageText = ''; }
             }
+            const noContent = !pageText || pageText.length < 50;
 
             // Build AI prompt
             const newsletterCtx = contextText || linkText || href;
-            let aiPrompt = `You are a proofreader for a political newsletter. A link appears in the newsletter and you must determine if it goes to the correct destination.
-
-NEWSLETTER CONTEXT (the text surrounding this link):
-${newsletterCtx.substring(0,600)}
-
-LINK TEXT: "${linkText}"
-LINK URL: ${href}
-
-PAGE CONTENT at that URL:
-${pageText}
-
-Answer in this exact JSON format (no other text):
-{"correct": true/false, "confidence": "high"/"medium"/"low", "reason": "one sentence explanation"}`;
+            let aiPrompt;
+            if (noContent) {
+                aiPrompt = 'You are a proofreader for a political newsletter (Field Team 6, a voter registration nonprofit). A link appears in the newsletter and you must determine if it goes to the correct destination.\n\n' +
+                    'NEWSLETTER CONTEXT (the text surrounding this link):\n' + newsletterCtx.substring(0,600) + '\n\n' +
+                    'LINK TEXT: "' + linkText + '"\n' +
+                    'LINK URL: ' + href + '\n\n' +
+                    'The page could not be fetched automatically (the site blocks bots or returned no readable content). Use web search to find out what this URL / site / page is, and judge whether it plausibly matches the newsletter context. Recognizable trusted destinations (e.g. official org sites, ActBlue donation pages, Zoom registration, Google Docs, YouTube, social media profiles) whose URL and link text match the context can be judged correct. If you truly cannot determine what the page is, answer with "unknown".\n\n' +
+                    'After any searching, end your response with EXACTLY this JSON format on its own line (no markdown fences):\n' +
+                    '{"correct": true/false/"unknown", "confidence": "high"/"medium"/"low", "reason": "one sentence explanation"}';
+            } else {
+                aiPrompt = 'You are a proofreader for a political newsletter. A link appears in the newsletter and you must determine if it goes to the correct destination.\n\n' +
+                    'NEWSLETTER CONTEXT (the text surrounding this link):\n' + newsletterCtx.substring(0,600) + '\n\n' +
+                    'LINK TEXT: "' + linkText + '"\n' +
+                    'LINK URL: ' + href + '\n\n' +
+                    'PAGE CONTENT at that URL:\n' + pageText + '\n\n' +
+                    'Answer with ONLY this JSON (no markdown fences, no other text):\n' +
+                    '{"correct": true/false/"unknown", "confidence": "high"/"medium"/"low", "reason": "one sentence explanation"}';
+            }
 
             try {
                 const aiRes = await fetch('/.netlify/functions/ai-check', {
                     method: 'POST',
                     headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({prompt: aiPrompt}),
-                    signal: AbortSignal.timeout(20000)
+                    signal: AbortSignal.timeout(60000)
                 });
                 const aiData = await aiRes.json();
                 const raw = aiData.text || (aiData.content&&aiData.content[0]&&aiData.content[0].text) || '';
-                let verdict;
-                try { verdict = JSON.parse(raw.replace(/\x60\x60\x60json|\x60\x60\x60/g,'')); } catch(e){ verdict=null; }
+                // Robust JSON extraction: the AI may add narration around the JSON,
+                // especially when it used web search. Grab the last {...} block.
+                let verdict = null;
+                try {
+                    const jsonMatches = raw.match(/\{[^{}]*\}/g);
+                    if (jsonMatches && jsonMatches.length) verdict = JSON.parse(jsonMatches[jsonMatches.length-1]);
+                } catch(e){ verdict=null; }
 
-                if (!verdict) {
+                if (!verdict || typeof verdict.correct === 'undefined') {
                     result.status='warn'; result.icon='⚠️'; result.message='AI check inconclusive — check manually';
+                    return result;
+                }
+
+                if (verdict.correct === 'unknown') {
+                    result.status='warn'; result.icon='⚠️';
+                    result.message='AI could not verify — ' + (verdict.reason || 'check manually');
+                    result.checks.push({field:'AI Check', icon:'⚠️', listed:newsletterCtx.substring(0,80), actual:verdict.reason||'', ok:null});
                     return result;
                 }
 
@@ -1237,7 +1265,11 @@ Answer in this exact JSON format (no other text):
                 }
             } catch(e) {
                 // AI call failed — fall back to reachability, still show remember button
-                result.status='pass'; result.icon='✅'; result.message='Reachable (AI unavailable)';
+                if (noContent) {
+                    result.status='warn'; result.icon='⚠️'; result.message='Could not verify (AI unavailable) — check manually';
+                } else {
+                    result.status='pass'; result.icon='✅'; result.message='Reachable (AI unavailable)';
+                }
             }
             return result;
         }
@@ -1616,11 +1648,18 @@ Answer in this exact JSON format (no other text):
 
                 btn.innerHTML = 'Proofreading<span class="loading"></span>';
 
+                // Truncate at a word boundary so the AI never sees an artificial mid-word cutoff
+                let pfText = plainText.substring(0, 20000);
+                if (plainText.length > 20000) {
+                    const _ws = pfText.lastIndexOf(' ');
+                    if (_ws > 100) pfText = pfText.substring(0, _ws);
+                }
+
                 // Build AI prompt
                 const prompt = `You are a meticulous proofreader for Field Team 6, a voter registration nonprofit. Review the newsletter text below and identify ALL issues in these specific categories. Be thorough but only flag real problems.
 
 RULES TO CHECK:
-1. TYPOS & GRAMMAR: spelling errors, wrong words, clear grammatical mistakes. Do NOT flag voter drive bullet lines (e.g. "GA (SAVANNAH) - Saturday, 3/14 at 9:30a") as incomplete — these are correctly formatted abbreviated event listings, not sentences. Only flag genuine misspellings or wrong words.
+1. TYPOS & GRAMMAR: spelling errors, wrong words, clear grammatical mistakes. Do NOT flag voter drive bullet lines (e.g. "GA (SAVANNAH) - Saturday, 3/14 at 9:30a") as incomplete — these are correctly formatted abbreviated event listings, not sentences. Only flag genuine misspellings or wrong words. CRITICAL: The newsletter text below may be cut off at the very end due to a length limit — NEVER flag the final sentence or final words of the text as an incomplete sentence, mid-sentence cutoff, or unfinished thought. Any apparent cutoff at the very end is an artifact of the length limit, not a real error in the newsletter.
 2. PARTY CAPITALIZATION: Only flag these specific errors:
 - "democrat" or "democratic" (lowercase) when CLEARLY referring to a person who is a Democrat or the Democratic Party must be capitalized. Example: "register new democratic voters" ✗ → "register new Democratic voters" ✓.
 - CRITICAL: The word "democracy" (the concept/system of government) is ALWAYS lowercase when used as a common noun. "democracy" ✓, "Democracy" ✗. Do NOT flag "democracy" as a capitalization error — it is never capitalized unless it is part of an ALL-CAPS title or a proper event name like "DONUTS & DEMOCRACY".
@@ -1635,13 +1674,13 @@ RULES TO CHECK:
 - CRITICAL: If you see "in-person" followed by ANY noun (drives, event, party, registration, etc.) — that is CORRECT, do NOT flag it
 - CRITICAL: Only flag if you see "in person" directly before a noun with NO hyphen, e.g. "in person event" ✗ or "in person fundraiser" ✗
 - CRITICAL: The quote you provide MUST appear verbatim word-for-word in the newsletter text. Do not invent or paraphrase.
-7. PEOPLE & ORG NAMES: flag any names that appear misspelled or inconsistent (e.g. "ActBlue" not "Actblue", "Mobilize" not "mobilize")
+7. PEOPLE & ORG NAMES: flag any names that appear misspelled or inconsistent (e.g. "ActBlue" not "Actblue", "Mobilize" not "mobilize"). IMPORTANT: Before flagging a personal name, court case name, or unfamiliar proper noun as a misspelling, use web search to verify it — many unusual names (volunteers, plaintiffs, court cases like "Callais") are spelled correctly. Only flag a name if you are confident it is actually wrong.
 8. HOTLINK PUNCTUATION: Report ONLY the following pre-detected cases where punctuation is definitively INSIDE a hyperlink (the parser confirmed the last character of the link text itself is punctuation). Do NOT invent any additional hotlink issues — only report what is in this list: ${JSON.stringify(linkAudit.slice(0,20))}. If this list is empty, do not report any hotlink issues.
 
 FONT ISSUES DETECTED BY PARSER (report these if present): ${styleAudit.length > 0 ? JSON.stringify(styleAudit.slice(0,10)) : 'None detected'}
 
 NEWSLETTER TEXT TO PROOFREAD:
-${plainText.substring(0, 6000)}
+${pfText}
 
 Respond ONLY with a JSON array of issues. Each issue object must have:
 - "severity": "error"|"warning"|"info"
