@@ -18,7 +18,7 @@ exports.handler = async function(event, context) {
     try { href = JSON.parse(event.body || '{}').href; }
     catch(e) { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) }; }
     if (!href) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing href' }) };
-    const REPO = 'Field-Team-6/newsletterhelper';
+    const REPO = 'Field-Team-6/blurbinator';
     const FILE = 'index.html';
     const API  = 'https://api.github.com';
     const ghHeaders = {
