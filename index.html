@@ -1217,8 +1217,9 @@
                         if (oeData.fetchedStatus === 200 && oeData.html) {
                             const oj = JSON.parse(oeData.html);
                             if (oj && (oj.title || oj.author_name)) {
-                                pageText = 'OFFICIAL PLATFORM METADATA for this exact URL (via oEmbed API - authoritative): title: ' + (oj.title||'') + (oj.author_name ? ' | author/channel: ' + oj.author_name : '') + (oj.provider_name ? ' | platform: ' + oj.provider_name : '');
-                                viaOembed = true;
+                                const isSpotifyShow = /spotify\.com\/show\//i.test(href);
+                                pageText = 'OFFICIAL PLATFORM METADATA for this exact URL (via oEmbed API - authoritative): title: ' + (oj.title||'') + (oj.author_name ? ' | author/channel: ' + oj.author_name : '') + (oj.provider_name ? ' | platform: ' + oj.provider_name : '') + (isSpotifyShow ? ' | IMPORTANT NOTE: For Spotify SHOW links this title is usually the LATEST EPISODE title, not the show name. An episode title differing from the expected show name is normal. Use web search to check whether this title is an episode of the expected show before judging.' : '');
+                                viaOembed = !isSpotifyShow;
                             }
                         }
                     } catch(e) {}
