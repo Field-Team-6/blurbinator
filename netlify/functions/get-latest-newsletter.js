@@ -1,5 +1,7 @@
 const https = require('https');
 
+const GMAIL_QUERY = 'from:info@fieldteam6.org subject:"Field Team 6 Weekly" -subject:Fwd -subject:Re newer_than:120d';
+
 function post(options, body) {
   return new Promise((resolve, reject) => {
     const req = https.request(options, res => {
@@ -89,12 +91,13 @@ exports.handler = async function(event, context) {
 
     const searchResult = await get({
       hostname: 'gmail.googleapis.com',
-      path: '/gmail/v1/users/me/messages?q=from:info@fieldteam6.org+subject:%22Field+Team+6+Weekly%22+-subject:Fwd+-subject:Re+newer_than%3A120d&maxResults=10',
+      path: '/gmail/v1/users/me/messages?q=' + encodeURIComponent(GMAIL_QUERY) + '&maxResults=10',
       headers: { Authorization: 'Bearer ' + accessToken }
     });
 
     if (!searchResult.messages || searchResult.messages.length === 0) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'No newsletters found' }) };
+      const prof = await get({ hostname: 'gmail.googleapis.com', path: '/gmail/v1/users/me/profile', headers: { Authorization: 'Bearer ' + accessToken } });
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'No newsletters found', mailbox: prof.emailAddress || null, query: GMAIL_QUERY, rawSearch: searchResult }) };
     }
 
     // Fetch metadata for top results to find the one with highest internalDate
