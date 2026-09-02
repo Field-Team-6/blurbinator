@@ -1936,20 +1936,54 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
           const results = document.getElementById('blurbinateResults');
           btn.disabled = true; btn.innerHTML = '🤖 Blurbinatin’<span class="loading"></span>';
 try {
-                // Step 1: Fetch latest newsletter via proof URL saved by Tool 3
-                const savedProofUrl = (() => { try { return localStorage.getItem('ft6_last_proof_url') || ''; } catch(e) { return ''; } })();
-                if (!savedProofUrl) throw new Error('No newsletter saved yet — run Tool 3 (Proof Link Checker) on Thursday with the Constant Contact proof URL and Blurbinate will remember it.');
-                const nlResp = await fetch('/.netlify/functions/fetch-proof', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({url: savedProofUrl})
-                });
-                const nlJson = await nlResp.json();
+                // Step 1: Fetch latest newsletter - Gmail first, saved proof URL as fallback
+                let nlJson = null; let NL_SOURCE = ''; let NL_SUBJECT = ''; let NL_WHEN = '';
+                try {
+                    const gResp = await fetch('/.netlify/functions/get-latest-newsletter');
+                    if (gResp.ok) {
+                        const g = await gResp.json();
+                        if (g && g.body && g.body.length > 500) {
+                            nlJson = { html: g.body };
+                            NL_SOURCE = 'Gmail';
+                            NL_SUBJECT = g.subject || '';
+                            NL_WHEN = g.date || '';
+                        }
+                    }
+                } catch(err) {}
+                if (!nlJson) {
+                    const savedProofUrl = (() => { try { return localStorage.getItem('ft6_last_proof_url') || ''; } catch(err2) { return ''; } })();
+                    if (!savedProofUrl) throw new Error('Could not reach Gmail, and no proof URL is saved. Run Tool 3 (Proof Link Checker) with the Constant Contact proof URL, or check the Gmail connection.');
+                    const nlResp = await fetch('/.netlify/functions/fetch-proof', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({url: savedProofUrl})
+                    });
+                    nlJson = await nlResp.json();
+                    NL_SOURCE = 'saved proof URL';
+                }
                 if (!nlJson.html && !nlJson.body) throw new Error('Could not fetch newsletter: ' + (nlJson.error || 'unknown'));
                 const tmpDiv = document.createElement('div');
                 tmpDiv.innerHTML = nlJson.html || nlJson.body || '';
                 tmpDiv.querySelectorAll('script,style').forEach(el => el.remove());
                 const NEWSLETTER_BODY = tmpDiv.innerText.replace(/\s+/g, ' ').trim();
+                (function(){
+                    var n = document.getElementById('blurbSourceNote');
+                    if (!n) {
+                        n = document.createElement('div');
+                        n.id = 'blurbSourceNote';
+                        var r = document.getElementById('blurbinateResults');
+                        if (r && r.parentNode) r.parentNode.insertBefore(n, r);
+                    }
+                    var ageTxt = ''; var stale = false;
+                    var t = NL_WHEN ? Date.parse(NL_WHEN) : NaN;
+                    if (!isNaN(t)) {
+                        var days = Math.floor((Date.now() - t) / 86400000);
+                        ageTxt = ' (' + days + ' days ago)';
+                        if (days > 10) stale = true;
+                    }
+                    n.style.cssText = 'margin:10px 0;padding:10px 12px;border-radius:6px;font:13px Arial,sans-serif;background:' + (stale ? '#fff4e5' : '#eef3fb') + ';color:' + (stale ? '#8a4b00' : '#1f3864') + ';border:1px solid ' + (stale ? '#f0c088' : '#c9d8ef') + ';';
+                    n.textContent = (stale ? 'HEADS UP - this looks stale. ' : '') + 'Using: ' + (NL_SUBJECT || '(subject unknown)') + ' - ' + (NL_WHEN || 'date unknown') + ageTxt + ' - via ' + NL_SOURCE;
+                })();
                 const NEWSLETTER_DATE = '';
                 const d = new Date();
                 const _t=new Date(),_dw=_t.getDay(),_bk=_dw>=4?_dw-4:_dw+3,_lt=new Date(_t); _lt.setDate(_t.getDate()-_bk); const nlDateShort=_lt.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric'});
