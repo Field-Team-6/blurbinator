@@ -89,7 +89,7 @@ exports.handler = async function(event, context) {
 
     const searchResult = await get({
       hostname: 'gmail.googleapis.com',
-      path: '/gmail/v1/users/me/messages?q=from:fieldteam6.org+newer_than%3A30d&maxResults=10',
+      path: '/gmail/v1/users/me/messages?q=from:info@fieldteam6.org+subject:%22Field+Team+6+Weekly%22+-subject:Fwd+-subject:Re+newer_than%3A120d&maxResults=10',
       headers: { Authorization: 'Bearer ' + accessToken }
     });
 
@@ -100,14 +100,14 @@ exports.handler = async function(event, context) {
     // Fetch metadata for top results to find the one with highest internalDate
     let messageId = searchResult.messages[0].id;
     if (searchResult.messages.length > 1) {
-      const metaFetches = searchResult.messages.slice(0, 5).map(m =>
+      const metaFetches = searchResult.messages.slice(0, 10).map(m =>
         get({ hostname: 'gmail.googleapis.com', path: '/gmail/v1/users/me/messages/' + m.id + '?format=metadata&metadataHeaders=Subject', headers: { Authorization: 'Bearer ' + accessToken } })
       );
       const metas = await Promise.all(metaFetches);
       // Filter to only newsletters (subject contains "Field Team 6 Weekly") and pick newest
       const newsletters = metas.filter(m => {
         const subj = (m.payload && m.payload.headers || []).find(h => h.name.toLowerCase() === 'subject');
-        return subj && subj.value.includes('Field Team 6 Weekly');
+        return subj && subj.value.includes('Field Team 6 Weekly') && !/^\s*(Fwd|Re):/i.test(subj.value);
       });
       const pool = newsletters.length > 0 ? newsletters : metas;
       pool.sort((a, b) => Number(b.internalDate) - Number(a.internalDate));
@@ -136,7 +136,9 @@ exports.handler = async function(event, context) {
         subject,
         date,
         body: body || '(could not extract body)',
-        snippet: message.snippet || ''
+        snippet: message.snippet || '',
+        source: 'gmail',
+        internalDate: message.internalDate
       })
     };
 
