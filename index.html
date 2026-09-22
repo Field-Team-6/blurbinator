@@ -688,6 +688,23 @@
 
 
     <script>
+        function ft6AiErrMsg(d) {
+            if (!d) return 'No response from the AI service.';
+            var m = '';
+            if (d.error && d.error.message) m = d.error.message;
+            else if (typeof d.error === 'string') m = d.error;
+            else if (d.message) m = d.message;
+            if (!m) return '';
+            var lower = m.toLowerCase();
+            var tip = '';
+            if (lower.indexOf('credit balance') !== -1) tip = 'Out of Anthropic API credits. Go to console.anthropic.com, open Plans & Billing, and buy credits. No redeploy needed.';
+            else if (lower.indexOf('rate limit') !== -1 || lower.indexOf('rate_limit') !== -1) tip = 'Anthropic API rate limit hit. Wait about a minute and try again.';
+            else if (lower.indexOf('authentication') !== -1 || lower.indexOf('api key') !== -1 || lower.indexOf('x-api-key') !== -1) tip = 'The Anthropic API key is missing or invalid in the Netlify environment variables.';
+            else if (lower.indexOf('overloaded') !== -1) tip = 'Anthropic API is temporarily overloaded. Try again in a moment.';
+            else if (lower.indexOf('not_found') !== -1 || lower.indexOf('model') !== -1) tip = 'The AI model name may be wrong or retired. Check the model in ai-check.js.';
+            if (tip) return tip + ' (Technical detail: ' + m + ')';
+            return 'AI service error: ' + m;
+        }
         // ========================================
         // Collapse / expand cards
         // Cards start collapsed; click header to open, click again to close
@@ -1739,6 +1756,7 @@ If NO issues found return []. Return ONLY the JSON array, no other text.`;
                     signal: AbortSignal.timeout(45000)
                 });
                 const aiData = await aiRes.json();
+                var ft6Err = ft6AiErrMsg(aiData); if (ft6Err) { throw new Error(ft6Err); }
                 const raw = (aiData.text || '').replace(/\x60\x60\x60json|\x60\x60\x60/g,'').trim();
 
                 let issues = [];
@@ -2116,6 +2134,7 @@ Format as clean HTML. Use <h2> for ## headers, <p> for text, <ul><li> for lists.
                     body: JSON.stringify({ prompt: aiPrompt, model: 'claude-haiku-4-5-20251001', max_tokens: 4000 })
                 });
                 const aiData = await aiResp.json();
+                var ft6Err = ft6AiErrMsg(aiData); if (ft6Err) { throw new Error(ft6Err); }
                 const html = aiData.text || aiData.text || '<p>No response from AI.</p>';
 
                 var cleanHtml = html.replace(/##\s*/g,'').replace(/<a /g,'<a target="_blank" ');
